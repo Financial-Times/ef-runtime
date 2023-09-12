@@ -1,0 +1,24 @@
+{
+  "name": "ef-runtime",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Financial-Times/ef-runtime.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Financial-Times/ef-runtime/issues"
+  },
+  "homepage": "https://github.com/Financial-Times/ef-runtime#readme",
+  "workspaces": [
+    "packages/ef-runtime-client",
+    "packages/ef-runtime-server",
+    "packages/ef-runtime-library"
+  ]
+}
