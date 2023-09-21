@@ -2,25 +2,37 @@ const EFRegistry = {};
 const EFRegistryBaseURL =
   "https://ef-component-registry-51742754f2eb.herokuapp.com";
 
-export async function init(options = {}) {
+function validateOptions(options) {
   if (options.systemCode === undefined) {
     throw new Error("Must provide a 'systemCode' option");
   }
-  // Add SystemJS script tag
+  return true;
+}
+
+function initSystemJS() {
   const systemJSScript = document.createElement("script");
   systemJSScript.src =
     "https://cdnjs.cloudflare.com/ajax/libs/systemjs/6.14.2/system.min.js";
   document.head.append(systemJSScript);
+}
 
-  // fetch from component registry
+async function fetchComponentRegistry(systemCode) {
   try {
-    const res = await fetch(`${EFRegistryBaseURL}/?app=${options.systemCode}`);
+    const res = await fetch(`${EFRegistryBaseURL}/?app=${systemCode}`);
     const data = await res.json();
     Object.assign(EFRegistry, data.imports);
   } catch (err) {
     console.error(`Unable to fetch Component Registry`);
     console.log(err);
   }
+}
+
+export async function init(options = {}) {
+  if (!validateOptions(options)) return;
+
+  initSystemJS();
+
+  await fetchComponentRegistry(options.systemCode);
 
   // Add overrides
   options.overrides &&
