@@ -1,5 +1,5 @@
 {
-  "name": "ef-runtime",
+  "name": "@financial-times/ef-runtime",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
