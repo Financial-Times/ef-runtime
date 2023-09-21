@@ -1,0 +1,39 @@
+# CircleCI configuration file
+version: 2.1
+
+defaults: &defaults
+  working_directory: ~/repo
+  docker:
+    - image: cimg/node:18.16
+
+all_branches_filter: &all_branches_filter
+  filters:
+    tags:
+      only: /^v[0-9]+\.[0-9]+\.[0-9]+/
+
+publish_with_tags_filter: &publish_with_tags_filter
+  filters:
+    branches:
+      ignore: /.*/
+    tags:
+      only: /^v[0-9]+\.[0-9]+\.[0-9]+/
+
+jobs:
+  publish:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - run:
+          name: Publish to NPM
+          command: |
+            npm set //registry.npmjs.org/:_authToken=$NPM_TOKEN
+            npm --prefix packages/ef-runtime-client publish --access=public
+
+workflows:
+  build_and_publish:
+    jobs:
+      - publish:
+          <<: *publish_with_tags_filter
+          context:
+            - npm-publish-token
