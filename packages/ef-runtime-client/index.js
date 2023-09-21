@@ -1,16 +1,31 @@
 const EFRegistry = {};
+const EFRegistryBaseURL =
+  "https://ef-component-registry-51742754f2eb.herokuapp.com";
 
-export function init(overrides = {}) {
+export async function init(options = {}) {
+  if (options.systemCode === undefined) {
+    throw new Error("Must provide a 'systemCode' option");
+  }
   // Add SystemJS script tag
   const systemJSScript = document.createElement("script");
   systemJSScript.src =
     "https://cdnjs.cloudflare.com/ajax/libs/systemjs/6.14.2/system.min.js";
   document.head.append(systemJSScript);
 
-  // TODO fetch from component registry
+  // fetch from component registry
+  try {
+    const res = await fetch(`${EFRegistryBaseURL}/?app=${options.systemCode}`);
+    const data = await res.json();
+    Object.assign(EFRegistry, data.imports);
+  } catch (err) {
+    console.error(`Unable to fetch Component Registry`);
+    console.log(err);
+  }
 
   // Add overrides
-  Object.assign(EFRegistry, overrides);
+  options.overrides &&
+    typeof options.overrides == "object" &&
+    Object.assign(EFRegistry, options.overrides);
 
   // TODO read overrides from config file if exists
 }
