@@ -1,15 +1,9 @@
-# CircleCI configuration file
 version: 2.1
 
 defaults: &defaults
   working_directory: ~/repo
   docker:
     - image: cimg/node:18.16
-
-all_branches_filter: &all_branches_filter
-  filters:
-    tags:
-      only: /^v[0-9]+\.[0-9]+\.[0-9]+/
 
 publish_with_tags_filter: &publish_with_tags_filter
   filters:
@@ -19,22 +13,60 @@ publish_with_tags_filter: &publish_with_tags_filter
       only: /^v[0-9]+\.[0-9]+\.[0-9]+/
 
 jobs:
-  publish:
+  deploy_ef_runtime_client:
     <<: *defaults
     steps:
       - checkout
-      - attach_workspace:
-          at: ~/repo
       - run:
-          name: Publish to NPM
-          command: |
-            npm set //registry.npmjs.org/:_authToken=$NPM_TOKEN
-            npm publish --access=public
+          name: Set NPM Token
+          command: npm set //registry.npmjs.org/:_authToken=$NPM_TOKEN
+      - run:
+          name: Change to Client Directory
+          command: cd ef-runtime-client
+      - run:
+          name: Publish Client to NPM
+          command: npm publish --access=public
+
+  deploy_ef_runtime_library:
+    <<: *defaults
+    steps:
+      - checkout
+      - run:
+          name: Set NPM Token
+          command: npm set //registry.npmjs.org/:_authToken=$NPM_TOKEN
+      - run:
+          name: Change to Library Directory
+          command: cd ef-runtime-library
+      - run:
+          name: Publish Library to NPM
+          command: npm publish --access=public
+
+  deploy_ef_runtime_server:
+    <<: *defaults
+    steps:
+      - checkout
+      - run:
+          name: Set NPM Token
+          command: npm set //registry.npmjs.org/:_authToken=$NPM_TOKEN
+      - run:
+          name: Change to Server Directory
+          command: cd ef-runtime-server
+      - run:
+          name: Publish Server to NPM
+          command: npm publish --access=public
 
 workflows:
   build_and_publish:
     jobs:
-      - publish:
+      - deploy_ef_runtime_client:
+          <<: *publish_with_tags_filter
+          context:
+            - npm-publish-token
+      - deploy_ef_runtime_library:
+          <<: *publish_with_tags_filter
+          context:
+            - npm-publish-token
+      - deploy_ef_runtime_server:
           <<: *publish_with_tags_filter
           context:
             - npm-publish-token
