@@ -1,6 +1,7 @@
 {
   "name": "@financial-times/ef-runtime",
   "version": "1.0.0",
+  "private": true,
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -20,5 +21,11 @@
     "packages/ef-runtime-client",
     "packages/ef-runtime-server",
     "packages/ef-runtime-library"
-  ]
+  ],
+  "volta": {
+    "node": "18.16.0"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.1"
+  }
 }
