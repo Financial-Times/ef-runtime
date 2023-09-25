@@ -26,10 +26,14 @@ jobs:
       - attach_workspace:
           at: ~/repo
       - run:
+          name: Build
+          command: |
+            npm run build --workspaces --if-present
+      - run:
           name: Publish to NPM
           command: |
             npm set //registry.npmjs.org/:_authToken=$NPM_TOKEN
-            npm publish --access=public
+            npm publish --workspaces --access=public
 
 workflows:
   build_and_publish:
