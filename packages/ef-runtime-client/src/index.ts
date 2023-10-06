@@ -1,22 +1,21 @@
 const EFRegistryBaseURL =
   "https://ef-component-registry-51742754f2eb.herokuapp.com";
 type EFRegistry = {
-  [propName: string]: string
-}
+  [propName: string]: string;
+};
 const EFRegistry: EFRegistry = {};
 
 async function initSystemJS() {
   return new Promise((resolve, reject) => {
     const systemJSScript = document.createElement("script");
-    systemJSScript.addEventListener('load', resolve);
-    systemJSScript.addEventListener('error', reject);
+    systemJSScript.addEventListener("load", resolve);
+    systemJSScript.addEventListener("error", reject);
 
     systemJSScript.src =
       "https://cdnjs.cloudflare.com/ajax/libs/systemjs/6.14.2/system.min.js";
     document.head.append(systemJSScript);
-  })
+  });
 }
-
 
 function validateOptions(options: any) {
   if (options.systemCode === undefined) {
@@ -39,7 +38,7 @@ async function fetchComponentRegistry(systemCode: string) {
 type EFRuntimeOptions = {
   systemCode?: string;
   overrides?: EFRegistry;
-}
+};
 export async function init(options: EFRuntimeOptions = {}) {
   if (!validateOptions(options)) return;
 
@@ -54,14 +53,18 @@ export async function init(options: EFRuntimeOptions = {}) {
     typeof options.overrides == "object" &&
     Object.assign(EFRegistry, options.overrides);
 
+  // Read overrides from Local Storage
+  const localStorageOverrides = localStorage.getItem("ef-overrides");
+  if (localStorageOverrides) {
+    Object.assign(EFRegistry, JSON.parse(localStorageOverrides));
+  }
+
   // Step 2. Load all known extensions.
   loadAll();
-
-  // TODO read overrides from config file if exists
 }
 
 export function loadAll(): void {
-  Object.keys(EFRegistry).forEach(component => load(component));
+  Object.keys(EFRegistry).forEach((component) => load(component));
 }
 
 export function load(component: string): void {
