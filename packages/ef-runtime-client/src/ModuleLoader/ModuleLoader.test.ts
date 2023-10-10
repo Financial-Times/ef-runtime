@@ -1,8 +1,10 @@
-import { SystemJSLoader } from "./SystemJSLoader";
+import { ModuleLoader, IModuleLoaderDependencies } from "./ModuleLoader";
 
-describe("SystemJSLoader", () => {
+describe("ModuleLoader", () => {
   let createElementMock: jest.Mock;
   let appendMock: jest.Mock;
+  let moduleLoader: ModuleLoader;
+  let moduleLoaderDependencies: IModuleLoaderDependencies;
 
   beforeEach(() => {
     createElementMock = jest.fn();
@@ -12,9 +14,17 @@ describe("SystemJSLoader", () => {
       createElement: createElementMock,
       head: { append: appendMock },
     }) as unknown as Document;
+
+    moduleLoaderDependencies = {
+      document: global.document,
+      loaderSrc:
+        "https://cdnjs.cloudflare.com/ajax/libs/systemjs/6.14.2/system.min.js",
+    };
+
+    moduleLoader = new ModuleLoader(moduleLoaderDependencies);
   });
 
-  it("should initialize SystemJS", async () => {
+  it("should initialize the module loader", async () => {
     const script = {
       addEventListener: jest.fn((event, callback) => {
         if (event === "load") {
@@ -24,7 +34,7 @@ describe("SystemJSLoader", () => {
     };
     createElementMock.mockReturnValue(script);
 
-    await SystemJSLoader.init();
+    await moduleLoader.init();
     expect(appendMock).toHaveBeenCalledWith(script);
     expect(script.addEventListener).toHaveBeenCalledTimes(2);
   });
@@ -34,7 +44,7 @@ describe("SystemJSLoader", () => {
     // @ts-ignore
     global.System = { import: jest.fn().mockReturnValue(Promise.resolve({})) };
 
-    await SystemJSLoader.importModule("url");
+    await moduleLoader.importModule("url");
     // @ts-ignore
     expect(global.System.import).toHaveBeenCalledWith("url");
   });

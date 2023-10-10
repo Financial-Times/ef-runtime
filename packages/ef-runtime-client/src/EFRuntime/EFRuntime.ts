@@ -1,24 +1,24 @@
 import { IComponentRegistry } from "../ComponentRegistry";
-import { SystemJSLoader } from "../SystemJSLoader";
+import { ModuleLoader } from "../ModuleLoader";
 
 export interface IRuntimeDependencies {
   componentRegistry: IComponentRegistry;
-  systemJSLoader: typeof SystemJSLoader;
+  moduleLoader: ModuleLoader; // <-- Change this line
   document: Document;
 }
 
 export class EFRuntime {
   private registry: IComponentRegistry;
-  private systemJSLoader: typeof SystemJSLoader;
+  private moduleLoader: ModuleLoader; // <-- Change this line
   private document: Document;
 
   constructor({
     componentRegistry,
-    systemJSLoader,
+    moduleLoader,
     document,
   }: IRuntimeDependencies) {
     this.registry = componentRegistry;
-    this.systemJSLoader = systemJSLoader;
+    this.moduleLoader = moduleLoader; // No errors should appear now
     this.document = document;
   }
 
@@ -40,7 +40,7 @@ export class EFRuntime {
     this.validateOptions(options);
 
     await Promise.all([
-      this.systemJSLoader.init(),
+      this.moduleLoader.init(),
       this.registry.fetch(options.systemCode as string),
     ]);
 
@@ -69,9 +69,7 @@ export class EFRuntime {
     }
     this.appendCSS(url);
     try {
-      const componentModule = await this.systemJSLoader.importModule(
-        `${url}/js`
-      );
+      const componentModule = await this.moduleLoader.importModule(`${url}/js`);
       this.executeLifecycleMethods(componentModule);
     } catch (error) {
       console.error(

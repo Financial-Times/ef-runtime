@@ -1,12 +1,20 @@
 import { ComponentRegistry } from "./ComponentRegistry";
-import { SystemJSLoader } from "./SystemJSLoader";
+import { ModuleLoader, IModuleLoaderDependencies } from "./ModuleLoader"; // Updated import
 import { EFRuntime, IRuntimeDependencies } from "./EFRuntime";
 
 const registry = new ComponentRegistry();
 
+const moduleLoaderDependencies: IModuleLoaderDependencies = {
+  document: document,
+  loaderSrc:
+    "https://cdnjs.cloudflare.com/ajax/libs/systemjs/6.14.2/system.min.js",
+};
+
+const moduleLoader = new ModuleLoader(moduleLoaderDependencies);
+
 const runtimeDependencies: IRuntimeDependencies = {
   componentRegistry: registry,
-  systemJSLoader: SystemJSLoader,
+  moduleLoader: moduleLoader,
   document: document,
 };
 

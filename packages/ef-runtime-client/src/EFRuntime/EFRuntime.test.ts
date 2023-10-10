@@ -1,10 +1,19 @@
 import { EFRuntime, IRuntimeDependencies } from "./EFRuntime";
 import { IComponentRegistry } from "../ComponentRegistry";
-import { SystemJSLoader } from "../SystemJSLoader";
+import { ModuleLoader, IModuleLoaderDependencies } from "../ModuleLoader";
+
+class MockModuleLoader extends ModuleLoader {
+  constructor(dependencies: IModuleLoaderDependencies) {
+    super(dependencies);
+  }
+
+  init = jest.fn();
+  importModule = jest.fn();
+}
 
 describe("EFRuntime", () => {
   let mockRegistry: jest.Mocked<IComponentRegistry>;
-  let mockSystemJSLoader: typeof SystemJSLoader;
+  let mockModuleLoader: MockModuleLoader;
   let mockDocument: Document;
   let dependencies: IRuntimeDependencies;
   let runtime: EFRuntime;
@@ -17,11 +26,6 @@ describe("EFRuntime", () => {
       applyOverrides: jest.fn(),
     };
 
-    mockSystemJSLoader = {
-      init: jest.fn(),
-      importModule: jest.fn(),
-    } as any;
-
     mockDocument = {
       createElement: jest.fn(),
       head: {
@@ -29,9 +33,16 @@ describe("EFRuntime", () => {
       },
     } as any;
 
+    const moduleLoaderDependencies: IModuleLoaderDependencies = {
+      document: mockDocument,
+      loaderSrc: "someSrc",
+    };
+
+    mockModuleLoader = new MockModuleLoader(moduleLoaderDependencies);
+
     dependencies = {
       componentRegistry: mockRegistry,
-      systemJSLoader: mockSystemJSLoader,
+      moduleLoader: mockModuleLoader,
       document: mockDocument,
     };
 
@@ -45,10 +56,10 @@ describe("EFRuntime", () => {
       );
     });
 
-    it("initializes SystemJSLoader and fetches registry", async () => {
+    it("initialises the module loader and fetches registry", async () => {
       await runtime.init({ systemCode: "some-system-code" });
 
-      expect(mockSystemJSLoader.init).toHaveBeenCalled();
+      expect(mockModuleLoader.init).toHaveBeenCalled();
       expect(mockRegistry.fetch).toHaveBeenCalledWith("some-system-code");
     });
 
