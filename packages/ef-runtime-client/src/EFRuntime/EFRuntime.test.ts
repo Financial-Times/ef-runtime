@@ -1,6 +1,15 @@
 import { EFRuntime, IRuntimeDependencies } from "./EFRuntime";
 import { IComponentRegistry } from "../ComponentRegistry";
 import { ModuleLoader, IModuleLoaderDependencies } from "../ModuleLoader";
+import { StylingHandler } from "../StylingHandler";
+
+class MockStylingHandler extends StylingHandler {
+  constructor(document: Document) {
+    super(document);
+  }
+
+  addStyling = jest.fn();
+}
 
 class MockModuleLoader extends ModuleLoader {
   constructor(dependencies: IModuleLoaderDependencies) {
@@ -14,7 +23,7 @@ class MockModuleLoader extends ModuleLoader {
 describe("EFRuntime", () => {
   let mockRegistry: jest.Mocked<IComponentRegistry>;
   let mockModuleLoader: MockModuleLoader;
-  let mockDocument: Document;
+  let mockStylingHandler: MockStylingHandler;
   let dependencies: IRuntimeDependencies;
   let runtime: EFRuntime;
 
@@ -26,12 +35,12 @@ describe("EFRuntime", () => {
       applyOverrides: jest.fn(),
     };
 
-    mockDocument = {
+    const mockDocument = {
       createElement: jest.fn(),
       head: {
         append: jest.fn(),
       },
-    } as any;
+    } as unknown as Document;
 
     const moduleLoaderDependencies: IModuleLoaderDependencies = {
       document: mockDocument,
@@ -39,11 +48,12 @@ describe("EFRuntime", () => {
     };
 
     mockModuleLoader = new MockModuleLoader(moduleLoaderDependencies);
+    mockStylingHandler = new MockStylingHandler(mockDocument);
 
     dependencies = {
       componentRegistry: mockRegistry,
       moduleLoader: mockModuleLoader,
-      document: mockDocument,
+      stylingHandler: mockStylingHandler,
     };
 
     runtime = new EFRuntime(dependencies);
@@ -56,7 +66,7 @@ describe("EFRuntime", () => {
       );
     });
 
-    it("initialises the module loader and fetches registry", async () => {
+    it("initializes the module loader and fetches registry", async () => {
       await runtime.init({ systemCode: "some-system-code" });
 
       expect(mockModuleLoader.init).toHaveBeenCalled();
@@ -81,6 +91,14 @@ describe("EFRuntime", () => {
       expect(console.error).toHaveBeenCalledWith(
         "Component some-component was not found in the Component Registry"
       );
+    });
+
+    it("adds styling if component is found in registry", async () => {
+      mockRegistry.getURL.mockReturnValue("some-url");
+
+      await runtime.load("some-component");
+
+      expect(mockStylingHandler.addStyling).toHaveBeenCalledWith("some-url");
     });
   });
 });

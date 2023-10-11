@@ -1,25 +1,26 @@
 import { IComponentRegistry } from "../ComponentRegistry";
 import { ModuleLoader } from "../ModuleLoader";
+import { StylingHandler } from "../StylingHandler";
 
 export interface IRuntimeDependencies {
   componentRegistry: IComponentRegistry;
   moduleLoader: ModuleLoader;
-  document: Document;
+  stylingHandler: StylingHandler;
 }
 
 export class EFRuntime {
   private registry: IComponentRegistry;
   private moduleLoader: ModuleLoader;
-  private document: Document;
+  private stylingHandler: StylingHandler;
 
   constructor({
     componentRegistry,
     moduleLoader,
-    document,
+    stylingHandler,
   }: IRuntimeDependencies) {
     this.registry = componentRegistry;
     this.moduleLoader = moduleLoader;
-    this.document = document;
+    this.stylingHandler = stylingHandler;
   }
 
   private validateOptions(options: {
@@ -67,7 +68,7 @@ export class EFRuntime {
       );
       return;
     }
-    this.appendCSS(url);
+    this.stylingHandler.addStyling(url);
     try {
       const componentModule = await this.moduleLoader.importModule(`${url}/js`);
       this.executeLifecycleMethods(componentModule);
@@ -77,13 +78,6 @@ export class EFRuntime {
         error
       );
     }
-  }
-
-  private appendCSS(url: string): void {
-    const componentCSS = this.document.createElement("link");
-    componentCSS.rel = "stylesheet";
-    componentCSS.href = `${url}/css`;
-    this.document.head.append(componentCSS);
   }
 
   private async executeLifecycleMethods(componentModule: any): Promise<void> {

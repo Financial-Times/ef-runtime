@@ -1,6 +1,7 @@
 import { ComponentRegistry } from "./ComponentRegistry";
 import { ModuleLoader, IModuleLoaderDependencies } from "./ModuleLoader";
 import { EFRuntime, IRuntimeDependencies } from "./EFRuntime";
+import { StylingHandler } from "./StylingHandler";
 
 const registryDependencies = {
   registryURL: "http://localhost:3003",
@@ -16,10 +17,12 @@ const moduleLoaderDependencies: IModuleLoaderDependencies = {
 
 const moduleLoader = new ModuleLoader(moduleLoaderDependencies);
 
+const stylingHandler = new StylingHandler(document);
+
 const runtimeDependencies: IRuntimeDependencies = {
   componentRegistry: registry,
   moduleLoader: moduleLoader,
-  document: document,
+  stylingHandler: stylingHandler,
 };
 
 const runtime = new EFRuntime(runtimeDependencies);
