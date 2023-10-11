@@ -5,12 +5,21 @@ export interface IComponentRegistry {
   applyOverrides(overrides: { [propName: string]: string }): void;
 }
 
+export interface IComponentRegistryDependencies {
+  registryURL: string;
+}
+
 export class ComponentRegistry implements IComponentRegistry {
   private registry: { [propName: string]: string } = {};
+  private registryURL: string;
+
+  constructor({ registryURL }: IComponentRegistryDependencies) {
+    this.registryURL = registryURL;
+  }
 
   async fetch(systemCode: string): Promise<void> {
     try {
-      const res = await fetch(`http://localhost:3003/?app=${systemCode}`);
+      const res = await fetch(`${this.registryURL}/?app=${systemCode}`);
       const data = await res.json();
       Object.assign(this.registry, data.imports);
     } catch (err) {

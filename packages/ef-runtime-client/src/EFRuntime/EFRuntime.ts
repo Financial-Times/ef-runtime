@@ -3,13 +3,13 @@ import { ModuleLoader } from "../ModuleLoader";
 
 export interface IRuntimeDependencies {
   componentRegistry: IComponentRegistry;
-  moduleLoader: ModuleLoader; // <-- Change this line
+  moduleLoader: ModuleLoader;
   document: Document;
 }
 
 export class EFRuntime {
   private registry: IComponentRegistry;
-  private moduleLoader: ModuleLoader; // <-- Change this line
+  private moduleLoader: ModuleLoader;
   private document: Document;
 
   constructor({
@@ -18,7 +18,7 @@ export class EFRuntime {
     document,
   }: IRuntimeDependencies) {
     this.registry = componentRegistry;
-    this.moduleLoader = moduleLoader; // No errors should appear now
+    this.moduleLoader = moduleLoader;
     this.document = document;
   }
 

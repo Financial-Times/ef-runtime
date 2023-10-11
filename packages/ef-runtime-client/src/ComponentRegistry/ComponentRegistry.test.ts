@@ -4,7 +4,7 @@ describe("ComponentRegistry", () => {
   let registry: ComponentRegistry;
 
   beforeEach(() => {
-    registry = new ComponentRegistry();
+    registry = new ComponentRegistry({ registryURL: "http://localhost:3003" });
   });
 
   it("should fetch systemCode", async () => {

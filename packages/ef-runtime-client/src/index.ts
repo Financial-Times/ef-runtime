@@ -1,8 +1,12 @@
 import { ComponentRegistry } from "./ComponentRegistry";
-import { ModuleLoader, IModuleLoaderDependencies } from "./ModuleLoader"; // Updated import
+import { ModuleLoader, IModuleLoaderDependencies } from "./ModuleLoader";
 import { EFRuntime, IRuntimeDependencies } from "./EFRuntime";
 
-const registry = new ComponentRegistry();
+const registryDependencies = {
+  registryURL: "http://localhost:3003",
+};
+
+const registry = new ComponentRegistry(registryDependencies);
 
 const moduleLoaderDependencies: IModuleLoaderDependencies = {
   document: document,
