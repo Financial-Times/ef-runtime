@@ -4,7 +4,7 @@ import { EFRuntime, IRuntimeDependencies } from "./EFRuntime";
 import { StylingHandler } from "./StylingHandler";
 
 const registryDependencies = {
-  registryURL: "http://localhost:3003",
+  registryURL: "https://ef-component-registry-51742754f2eb.herokuapp.com",
 };
 
 const registry = new ComponentRegistry(registryDependencies);
