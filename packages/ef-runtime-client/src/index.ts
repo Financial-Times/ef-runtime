@@ -28,7 +28,7 @@ const runtimeDependencies: IRuntimeDependencies = {
 const runtime = new EFRuntime(runtimeDependencies);
 
 export async function init(options: {
-  systemCode?: string;
+  systemCode: string;
   overrides?: { [propName: string]: string };
 }) {
   await runtime.init(options);

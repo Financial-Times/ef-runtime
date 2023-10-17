@@ -53,10 +53,12 @@ export class EFRuntime {
   }
 
   loadAll(): void {
-    for (const component of this.registry.getComponentKeys()) {
-      this.load(component).catch((error) =>
-        console.error(`Error loading ${component}`, error)
-      );
+    for (const component in this.registry) {
+      if (this.registry.hasOwnProperty(component)) {
+        this.load(component).catch((error) =>
+          console.error(`Error loading ${component}`, error)
+        );
+      }
     }
   }
 
@@ -82,6 +84,6 @@ export class EFRuntime {
 
   private async executeLifecycleMethods(componentModule: any): Promise<void> {
     if (componentModule?.init) await componentModule.init();
-    if (componentModule?.mount) componentModule.mount();
+    if (componentModule?.mount) await componentModule.mount();
   }
 }
