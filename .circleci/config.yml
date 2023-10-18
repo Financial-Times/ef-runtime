@@ -38,10 +38,25 @@ jobs:
           command: |
             npm set //registry.npmjs.org/:_authToken=$NPM_TOKEN
             npm publish --workspaces --access=public
+  test_ef_runtime_client:
+    <<: *defaults
+    steps:
+      - checkout
+      - run:
+          name: Install
+          command: |
+            cd packages/ef-runtime-client
+            npm install
+      - run:
+          name: Run Tests
+          command: |
+            cd packages/ef-runtime-client
+            npm test
 
 workflows:
   build_and_publish:
     jobs:
+      - test_ef_runtime_client
       - publish:
           <<: *publish_with_tags_filter
           context:
