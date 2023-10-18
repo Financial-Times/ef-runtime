@@ -27,4 +27,15 @@ describe("ComponentRegistry", () => {
     registry.applyOverrides({ "ef-demo-component": "override-url" });
     expect(registry.getURL("ef-demo-component")).toBe("override-url");
   });
+
+  // New test case for getComponentKeys
+  it("should return component keys", () => {
+    registry.applyOverrides({
+      "ef-demo-component": "override-url",
+      "another-component": "another-url",
+    });
+
+    const keys = registry.getComponentKeys();
+    expect(keys).toEqual(["ef-demo-component", "another-component"]);
+  });
 });

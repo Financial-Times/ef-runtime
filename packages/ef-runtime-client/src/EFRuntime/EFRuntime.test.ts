@@ -7,7 +7,6 @@ class MockStylingHandler extends StylingHandler {
   constructor(document: Document) {
     super(document);
   }
-
   addStyling = jest.fn();
 }
 
@@ -15,7 +14,6 @@ class MockModuleLoader extends ModuleLoader {
   constructor(dependencies: IModuleLoaderDependencies) {
     super(dependencies);
   }
-
   init = jest.fn();
   importModule = jest.fn();
 }
@@ -33,7 +31,8 @@ describe("EFRuntime", () => {
       getURL: jest.fn(),
       getComponentKeys: jest.fn().mockReturnValue([]),
       applyOverrides: jest.fn(),
-    };
+      getRegistry: jest.fn().mockReturnValue({}),
+    } as jest.Mocked<IComponentRegistry>;
 
     const mockDocument = {
       createElement: jest.fn(),

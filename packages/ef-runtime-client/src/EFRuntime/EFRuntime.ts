@@ -53,12 +53,11 @@ export class EFRuntime {
   }
 
   loadAll(): void {
-    for (const component in this.registry) {
-      if (this.registry.hasOwnProperty(component)) {
-        this.load(component).catch((error) =>
-          console.error(`Error loading ${component}`, error)
-        );
-      }
+    const components = Object.keys(this.registry.getRegistry());
+    for (const component of components) {
+      this.load(component).catch((error) =>
+        console.error(`Error loading ${component}`, error)
+      );
     }
   }
 

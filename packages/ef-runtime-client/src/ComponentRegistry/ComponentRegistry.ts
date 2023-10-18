@@ -3,6 +3,7 @@ export interface IComponentRegistry {
   getURL(component: string): string | undefined;
   getComponentKeys(): string[];
   applyOverrides(overrides: { [propName: string]: string }): void;
+  getRegistry(): { [key: string]: string };
 }
 
 export interface IComponentRegistryDependencies {
@@ -29,6 +30,10 @@ export class ComponentRegistry implements IComponentRegistry {
 
   getURL(component: string): string | undefined {
     return this.registry[component];
+  }
+
+  getComponentKeys(): string[] {
+    return Object.keys(this.registry);
   }
 
   getRegistry(): { [key: string]: string } {
