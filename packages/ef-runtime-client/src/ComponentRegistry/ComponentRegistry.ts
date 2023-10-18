@@ -31,8 +31,8 @@ export class ComponentRegistry implements IComponentRegistry {
     return this.registry[component];
   }
 
-  getComponentKeys(): string[] {
-    return Object.keys(this.registry);
+  getRegistry(): { [key: string]: string } {
+    return { ...this.registry };
   }
 
   applyOverrides(overrides: { [propName: string]: string }): void {
