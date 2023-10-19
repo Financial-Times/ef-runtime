@@ -1,29 +1,19 @@
-export interface IModuleLoaderDependencies {
-  document: Document;
-  loaderSrc: string;
-}
+import { IComponentRegistry } from "../ComponentRegistry";
 
 export class ModuleLoader {
-  private document: Document;
-  private loaderSrc: string;
+  private componentRegistry;
 
-  constructor({ document, loaderSrc }: IModuleLoaderDependencies) {
-    this.document = document;
-    this.loaderSrc = loaderSrc;
+  constructor(componentRegistry: IComponentRegistry) {
+    this.componentRegistry = componentRegistry;
   }
 
   async init(): Promise<void> {
     return new Promise((resolve, reject) => {
-      const script = this.document.createElement("script");
-      script.addEventListener("load", () => resolve());
-      script.addEventListener("error", reject);
-      script.src = this.loaderSrc;
-      this.document.head.append(script);
+      resolve();
     });
   }
 
   async importModule(url: string): Promise<any> {
-    // @ts-ignore
-    return global.System.import(url);
+    return System.import(url);
   }
 }

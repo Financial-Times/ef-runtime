@@ -40,14 +40,13 @@ export class EFRuntime {
   ): Promise<void> {
     this.validateOptions(options);
 
-    await Promise.all([
-      this.moduleLoader.init(),
-      this.registry.fetch(options.systemCode as string),
-    ]);
+    await this.registry.fetch(options.systemCode as string);
 
     if (options.overrides) {
       this.registry.applyOverrides(options.overrides);
     }
+
+    await this.moduleLoader.init();
 
     this.loadAll();
   }

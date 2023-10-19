@@ -1,10 +1,10 @@
-import { ModuleLoader, IModuleLoaderDependencies } from "./ModuleLoader";
+import { ComponentRegistry } from "../ComponentRegistry";
+import { ModuleLoader } from "./ModuleLoader";
 
 describe("ModuleLoader", () => {
   let createElementMock: jest.Mock;
   let appendMock: jest.Mock;
   let moduleLoader: ModuleLoader;
-  let moduleLoaderDependencies: IModuleLoaderDependencies;
 
   beforeEach(() => {
     createElementMock = jest.fn();
@@ -15,13 +15,13 @@ describe("ModuleLoader", () => {
       head: { append: appendMock },
     }) as unknown as Document;
 
-    moduleLoaderDependencies = {
-      document: global.document,
-      loaderSrc:
-        "https://cdnjs.cloudflare.com/ajax/libs/systemjs/6.14.2/system.min.js",
+    const registryDependencies = {
+      registryURL: "https://ef-component-registry-51742754f2eb.herokuapp.com",
     };
 
-    moduleLoader = new ModuleLoader(moduleLoaderDependencies);
+    const registry = new ComponentRegistry(registryDependencies);
+
+    moduleLoader = new ModuleLoader(registry);
   });
 
   it("should initialize the module loader", async () => {
