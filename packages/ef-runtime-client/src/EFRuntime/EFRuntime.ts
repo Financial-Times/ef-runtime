@@ -50,16 +50,19 @@ export class EFRuntime {
       this.registry.applyOverrides(options.overrides);
     }
 
-    this.loadAll();
+    return this.loadAll();
   }
 
-  loadAll(): void {
+  async loadAll(): Promise<void> {
     const components = Object.keys(this.registry.getRegistry());
     for (const component of components) {
       this.load(component).catch((error) =>
-        logger.error(`Error loading ${component}`, error)
+        logger.error(`Failed to initialise and mount ${component}`, error)
       );
     }
+    await Promise.allSettled(
+      components.map((component) => this.load(component))
+    );
   }
 
   async load(component: string): Promise<void> {
@@ -70,13 +73,13 @@ export class EFRuntime {
       );
       return;
     }
-    this.stylingHandler.addStyling(url);
     try {
+      this.stylingHandler.addStyling(url);
       const componentModule = await this.moduleLoader.importModule(`${url}/js`);
-      this.executeLifecycleMethods(componentModule);
+      await this.executeLifecycleMethods(componentModule);
     } catch (error) {
       logger.error(
-        `Failed to load component ${component} using SystemJS`,
+        `Error when mounting component ${component} using SystemJS`,
         error
       );
     }
