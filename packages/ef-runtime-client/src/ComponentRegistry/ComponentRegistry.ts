@@ -14,10 +14,12 @@ export interface IComponentRegistryDependencies {
 
 export class ComponentRegistry implements IComponentRegistry {
   private registry: { [propName: string]: string } = {};
+  private initialised: boolean;
   private registryURL: string;
 
   constructor({ registryURL }: IComponentRegistryDependencies) {
     this.registryURL = registryURL;
+    this.initialised = false;
   }
 
   async fetch(systemCode: string): Promise<void> {
@@ -25,24 +27,53 @@ export class ComponentRegistry implements IComponentRegistry {
       const res = await fetch(`${this.registryURL}/?app=${systemCode}`);
       const data = await res.json();
       Object.assign(this.registry, data.imports);
+      this.initialised = true;
     } catch (err) {
       logger.error("Unable to fetch Component Registry", err);
     }
   }
 
   getURL(component: string): string | undefined {
+    if (!this.initialised) {
+      logger.warn(
+        "Unable to get component URL. Component Registry was not initialised yet"
+      );
+      return;
+    }
     return this.registry[component];
   }
 
   getComponentKeys(): string[] {
+    if (!this.initialised) {
+      logger.warn(
+        "Unable to get component keys. Component Registry was not initialised yet"
+      );
+      return;
+    }
     return Object.keys(this.registry);
   }
 
   getRegistry(): { [key: string]: string } {
+    if (!this.initialised) {
+      logger.warn(
+        "Unable to get Registry. Component Registry was not initialised yet"
+      );
+      return {};
+    }
     return { ...this.registry };
   }
 
   applyOverrides(overrides: { [propName: string]: string }): void {
-    Object.assign(this.registry, overrides);
+    try {
+      Object.assign(this.registry, overrides);
+      if (Object.keys(overrides).length > 0) {
+        // if override includes at least one entry
+        // considers the components initialised even
+        // if fetch was not called
+        this.initialised = true;
+      }
+    } catch (err) {
+      logger.error("Failed to apply overrides", err);
+    }
   }
 }
