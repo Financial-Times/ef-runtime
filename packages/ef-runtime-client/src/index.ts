@@ -2,6 +2,7 @@ import { ComponentRegistry } from "./ComponentRegistry";
 import { ModuleLoader, IModuleLoaderDependencies } from "./ModuleLoader";
 import { EFRuntime, IRuntimeDependencies } from "./EFRuntime";
 import { StylingHandler } from "./StylingHandler";
+import { logger } from "./utils/logger";
 
 const registryDependencies = {
   registryURL: "https://ef-component-registry-51742754f2eb.herokuapp.com",
@@ -31,5 +32,9 @@ export async function init(options: {
   systemCode: string;
   overrides?: { [propName: string]: string };
 }) {
-  await runtime.init(options);
+  try {
+    await runtime.init(options);
+  } catch {
+    logger.error(`Failed to initialise runtime`);
+  }
 }
