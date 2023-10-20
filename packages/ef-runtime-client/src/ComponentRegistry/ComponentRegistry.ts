@@ -1,3 +1,5 @@
+import { logger } from "../utils/logger";
+
 export interface IComponentRegistry {
   fetch(systemCode: string): Promise<void>;
   getURL(component: string): string | undefined;
@@ -24,7 +26,7 @@ export class ComponentRegistry implements IComponentRegistry {
       const data = await res.json();
       Object.assign(this.registry, data.imports);
     } catch (err) {
-      console.error("Unable to fetch Component Registry", err);
+      logger.error("Unable to fetch Component Registry", err);
     }
   }
 

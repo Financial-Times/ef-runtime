@@ -1,6 +1,7 @@
 import { IComponentRegistry } from "../ComponentRegistry";
 import { ModuleLoader } from "../ModuleLoader";
 import { StylingHandler } from "../StylingHandler";
+import { logger } from "../utils/logger";
 
 export interface IRuntimeDependencies {
   componentRegistry: IComponentRegistry;
@@ -56,7 +57,7 @@ export class EFRuntime {
     const components = Object.keys(this.registry.getRegistry());
     for (const component of components) {
       this.load(component).catch((error) =>
-        console.error(`Error loading ${component}`, error)
+        logger.error(`Error loading ${component}`, error)
       );
     }
   }
@@ -64,7 +65,7 @@ export class EFRuntime {
   async load(component: string): Promise<void> {
     const url = this.registry.getURL(component);
     if (!url) {
-      console.error(
+      logger.error(
         `Component ${component} was not found in the Component Registry`
       );
       return;
@@ -74,7 +75,7 @@ export class EFRuntime {
       const componentModule = await this.moduleLoader.importModule(`${url}/js`);
       this.executeLifecycleMethods(componentModule);
     } catch (error) {
-      console.error(
+      logger.error(
         `Failed to load component ${component} using SystemJS`,
         error
       );

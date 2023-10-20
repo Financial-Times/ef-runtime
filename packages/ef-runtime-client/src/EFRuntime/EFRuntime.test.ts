@@ -2,6 +2,7 @@ import { EFRuntime, IRuntimeDependencies } from "./EFRuntime";
 import { IComponentRegistry } from "../ComponentRegistry";
 import { ModuleLoader, IModuleLoaderDependencies } from "../ModuleLoader";
 import { StylingHandler } from "../StylingHandler";
+import { logger } from "../utils/logger";
 
 class MockStylingHandler extends StylingHandler {
   constructor(document: Document) {
@@ -59,6 +60,10 @@ describe("EFRuntime", () => {
   });
 
   describe("init", () => {
+    afterAll(() => {
+      jest.restoreAllMocks();
+    });
+
     it("throws an error if systemCode is not provided", async () => {
       await expect(runtime.init({})).rejects.toThrow(
         "Must provide a systemCode option"
@@ -83,11 +88,11 @@ describe("EFRuntime", () => {
   describe("load", () => {
     it("logs an error if component is not found in registry", async () => {
       mockRegistry.getURL.mockReturnValue(undefined);
-      console.error = jest.fn();
+      const spyLogger = jest.spyOn(logger, "error");
 
       await runtime.load("some-component");
 
-      expect(console.error).toHaveBeenCalledWith(
+      expect(spyLogger).toHaveBeenCalledWith(
         "Component some-component was not found in the Component Registry"
       );
     });
