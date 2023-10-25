@@ -1,5 +1,5 @@
 import { ComponentRegistry } from "./ComponentRegistry";
-import { ModuleLoader, IModuleLoaderDependencies } from "./ModuleLoader";
+import { ModuleLoader } from "./ModuleLoader";
 import { EFRuntime, IRuntimeDependencies } from "./EFRuntime";
 import { StylingHandler } from "./StylingHandler";
 
@@ -9,13 +9,7 @@ const registryDependencies = {
 
 const registry = new ComponentRegistry(registryDependencies);
 
-const moduleLoaderDependencies: IModuleLoaderDependencies = {
-  document: document,
-  loaderSrc:
-    "https://cdnjs.cloudflare.com/ajax/libs/systemjs/6.14.2/system.min.js",
-};
-
-const moduleLoader = new ModuleLoader(moduleLoaderDependencies);
+const moduleLoader = new ModuleLoader(registry);
 
 const stylingHandler = new StylingHandler(document);
 

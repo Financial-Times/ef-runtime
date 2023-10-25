@@ -1,6 +1,6 @@
 import { EFRuntime, IRuntimeDependencies } from "./EFRuntime";
-import { IComponentRegistry } from "../ComponentRegistry";
-import { ModuleLoader, IModuleLoaderDependencies } from "../ModuleLoader";
+import { ComponentRegistry, IComponentRegistry } from "../ComponentRegistry";
+import { ModuleLoader } from "../ModuleLoader";
 import { StylingHandler } from "../StylingHandler";
 
 class MockStylingHandler extends StylingHandler {
@@ -11,7 +11,7 @@ class MockStylingHandler extends StylingHandler {
 }
 
 class MockModuleLoader extends ModuleLoader {
-  constructor(dependencies: IModuleLoaderDependencies) {
+  constructor(dependencies: IComponentRegistry) {
     super(dependencies);
   }
   init = jest.fn();
@@ -41,12 +41,13 @@ describe("EFRuntime", () => {
       },
     } as unknown as Document;
 
-    const moduleLoaderDependencies: IModuleLoaderDependencies = {
-      document: mockDocument,
-      loaderSrc: "someSrc",
+    const registryDependencies = {
+      registryURL: "https://ef-component-registry-51742754f2eb.herokuapp.com",
     };
 
-    mockModuleLoader = new MockModuleLoader(moduleLoaderDependencies);
+    const registry = new ComponentRegistry(registryDependencies);
+
+    mockModuleLoader = new MockModuleLoader(registry);
     mockStylingHandler = new MockStylingHandler(mockDocument);
 
     dependencies = {
