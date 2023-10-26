@@ -18,6 +18,29 @@ class MockModuleLoader extends ModuleLoader {
   importModule = jest.fn();
 }
 
+class MockLocalStorage {
+  private store: { [key: string]: string };
+  constructor() {
+    this.store = {};
+  }
+
+  clear() {
+    this.store = {};
+  }
+
+  getItem(key: string) {
+    return this.store[key] || null;
+  }
+
+  setItem(key: string, value: string) {
+    this.store[key] = String(value);
+  }
+
+  removeItem(key: string) {
+    delete this.store[key];
+  }
+}
+
 describe("EFRuntime", () => {
   let mockRegistry: jest.Mocked<IComponentRegistry>;
   let mockModuleLoader: MockModuleLoader;
@@ -40,6 +63,13 @@ describe("EFRuntime", () => {
         append: jest.fn(),
       },
     } as unknown as Document;
+
+    const mockLocalStorage = new MockLocalStorage() as unknown as Storage;
+    mockLocalStorage.setItem(
+      "ef-overrides",
+      JSON.stringify({ "some-component": "some-url" })
+    );
+    global.localStorage = mockLocalStorage;
 
     const moduleLoaderDependencies: IModuleLoaderDependencies = {
       document: mockDocument,
