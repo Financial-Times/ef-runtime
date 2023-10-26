@@ -1,24 +1,16 @@
 {
-    "extends": "../../tsconfig.json",
-    "compilerOptions": {
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "preact",
-        "outDir": "./dist/",
-        "baseUrl": "./",
-        "paths": {
-            "~/src/*": [
-                "src/*"
-            ],
-            "~/test/*": [
-                "test/*"
-            ],
-            "~/types/*": [
-                "types/*"
-            ]
-        }
-    },
-    "types": ["systemjs", "jest", "node"],
-    "include": [
-        "./src/**/*"
-    ]
+    "outDir": "./dist/",
+    "baseUrl": "./",
+    "paths": {
+      "~/src/*": ["src/*"],
+      "~/test/*": ["test/*"],
+      "~/types/*": ["types/*"]
+    }
+  },
+  "types": ["systemjs", "jest", "node"],
+  "include": ["./src/**/*"]
 }
