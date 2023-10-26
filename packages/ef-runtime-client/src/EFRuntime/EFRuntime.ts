@@ -49,6 +49,11 @@ export class EFRuntime {
       this.registry.applyOverrides(options.overrides);
     }
 
+    const localOverrides = localStorage.getItem("ef-overrides");
+    if (localOverrides) {
+      this.registry.applyOverrides(JSON.parse(localOverrides));
+    }
+
     this.loadAll();
   }
 

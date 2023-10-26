@@ -2,6 +2,7 @@ import { ComponentRegistry } from "./ComponentRegistry";
 import { ModuleLoader, IModuleLoaderDependencies } from "./ModuleLoader";
 import { EFRuntime, IRuntimeDependencies } from "./EFRuntime";
 import { StylingHandler } from "./StylingHandler";
+import UI from "./ui";
 
 const registryDependencies = {
   registryURL: "https://ef-component-registry-51742754f2eb.herokuapp.com",
@@ -32,4 +33,5 @@ export async function init(options: {
   overrides?: { [propName: string]: string };
 }) {
   await runtime.init(options);
+  if (location.hostname.match("local")) UI.init(registry);
 }
