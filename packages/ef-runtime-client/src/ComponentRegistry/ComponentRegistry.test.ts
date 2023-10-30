@@ -11,12 +11,19 @@ describe("ComponentRegistry", () => {
     global.fetch = jest.fn().mockImplementation(() =>
       Promise.resolve({
         json: () =>
-          Promise.resolve({ imports: { "ef-demo-component": "url" } }),
+          Promise.resolve({
+            imports: {
+              "ef-demo-component": { js: "js-url", css: "css-url" },
+            },
+          }),
       })
     );
 
     await registry.fetch("systemCode");
-    expect(registry.getURL("ef-demo-component")).toBe("url");
+    expect(registry.getURL("ef-demo-component")).toEqual({
+      js: "js-url",
+      css: "css-url",
+    });
   });
 
   it("should get undefined for non-existent component", () => {
@@ -24,15 +31,28 @@ describe("ComponentRegistry", () => {
   });
 
   it("should apply overrides", () => {
-    registry.applyOverrides({ "ef-demo-component": "override-url" });
-    expect(registry.getURL("ef-demo-component")).toBe("override-url");
+    registry.applyOverrides({
+      "ef-demo-component": {
+        js: "override-js-url",
+        css: "override-css-url",
+      },
+    });
+    expect(registry.getURL("ef-demo-component")).toEqual({
+      js: "override-js-url",
+      css: "override-css-url",
+    });
   });
 
-  // New test case for getComponentKeys
   it("should return component keys", () => {
     registry.applyOverrides({
-      "ef-demo-component": "override-url",
-      "another-component": "another-url",
+      "ef-demo-component": {
+        js: "override-js-url",
+        css: "override-css-url",
+      },
+      "another-component": {
+        js: "another-js-url",
+        css: "another-css-url",
+      },
     });
 
     const keys = registry.getComponentKeys();

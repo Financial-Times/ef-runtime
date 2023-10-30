@@ -95,7 +95,7 @@ describe("EFRuntime", () => {
       );
     });
 
-    it("initializes the module loader and fetches registry", async () => {
+    it("initialises the module loader and fetches registry", async () => {
       await runtime.init({ systemCode: "some-system-code" });
 
       expect(mockModuleLoader.init).toHaveBeenCalled();
@@ -103,7 +103,12 @@ describe("EFRuntime", () => {
     });
 
     it("applies overrides if provided", async () => {
-      const overrides = { "some-component": "some-url" };
+      const overrides = {
+        "some-component": {
+          js: "some-js-url",
+          css: "some-css-url",
+        },
+      };
       await runtime.init({ systemCode: "some-system-code", overrides });
 
       expect(mockRegistry.applyOverrides).toHaveBeenCalledWith(overrides);
@@ -118,16 +123,56 @@ describe("EFRuntime", () => {
       await runtime.load("some-component");
 
       expect(console.error).toHaveBeenCalledWith(
-        "Component some-component was not found in the Component Registry"
+        "Failed to retrieve URL for component some-component"
       );
     });
 
-    it("adds styling if component is found in registry", async () => {
-      mockRegistry.getURL.mockReturnValue("some-url");
+    it("logs an error if js is missing from registry", async () => {
+      mockRegistry.getURL.mockReturnValue({ js: null, css: "some-css-url" });
+      console.error = jest.fn();
 
       await runtime.load("some-component");
 
-      expect(mockStylingHandler.addStyling).toHaveBeenCalledWith("some-url");
+      expect(console.error).toHaveBeenCalledWith(
+        "Missing JS URL for component some-component"
+      );
+    });
+
+    it("logs an error if css is missing from registry", async () => {
+      mockRegistry.getURL.mockReturnValue({ js: "some-js-url", css: null });
+      console.error = jest.fn();
+
+      await runtime.load("some-component");
+
+      expect(console.error).toHaveBeenCalledWith(
+        "Missing CSS URL for component some-component"
+      );
+    });
+
+    it("logs an error if both js and css are missing from registry", async () => {
+      mockRegistry.getURL.mockReturnValue({ js: null, css: null });
+      console.error = jest.fn();
+
+      await runtime.load("some-component");
+
+      expect(console.error).toHaveBeenCalledWith(
+        "Missing JS and CSS URL for component some-component"
+      );
+    });
+
+    it("adds styling and imports module if component is found in registry", async () => {
+      mockRegistry.getURL.mockReturnValue({
+        js: "some-js-url",
+        css: "some-css-url",
+      });
+      mockModuleLoader.importModule.mockResolvedValue({});
+
+      await runtime.load("some-component");
+
+      expect(mockStylingHandler.addStyling).toHaveBeenCalledWith(
+        "some-css-url"
+      );
+      expect(mockModuleLoader.importModule).toHaveBeenCalledWith("some-js-url");
     });
   });
 });
