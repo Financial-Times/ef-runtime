@@ -74,6 +74,7 @@ describe("EFRuntime", () => {
     const moduleLoaderDependencies: IModuleLoaderDependencies = {
       document: mockDocument,
       loaderSrc: "someSrc",
+      registry: mockRegistry
     };
 
     mockModuleLoader = new MockModuleLoader(moduleLoaderDependencies);

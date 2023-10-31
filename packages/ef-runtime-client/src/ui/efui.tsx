@@ -2,15 +2,20 @@ import { Component } from "preact/compat";
 import { IComponentRegistry } from "../ComponentRegistry";
 import styles from "./styles";
 
+interface EFComponentInfo {
+  js?: string;
+  css?: string;
+}
+
 type EFUIProps = { componentRegistry: IComponentRegistry };
 type EFUIState = {
   showComponents: boolean;
   needsRefresh: boolean;
-  components: { [key: string]: string };
+  components: { [key: string]: EFComponentInfo };
 };
 
 export default class EFUI extends Component<EFUIProps, EFUIState> {
-  private localOverrides: { [key: string]: string };
+  private localOverrides: { [key: string]: EFComponentInfo };
   private componentRegistry: IComponentRegistry;
 
   constructor(props: EFUIProps) {
@@ -47,8 +52,8 @@ export default class EFUI extends Component<EFUIProps, EFUIState> {
     localStorage.setItem("ef-overrides", JSON.stringify(this.localOverrides));
   }
 
-  addOverrides = (name: string, url: string) => {
-    this.localOverrides[name] = url;
+  addOverrides = (name: string, info: EFComponentInfo) => {
+    this.localOverrides[name] = info;
     this.updateComponents();
   };
 
@@ -59,7 +64,10 @@ export default class EFUI extends Component<EFUIProps, EFUIState> {
 
   onSubmit = (e: any) => {
     e.preventDefault();
-    this.addOverrides(e.target.name.value, e.target.url.value);
+    this.addOverrides(e.target.name.value, {
+      js: e.target.js.value,
+      css: e.target.css.value,
+    });
     e.target.reset();
   };
 
@@ -75,18 +83,21 @@ export default class EFUI extends Component<EFUIProps, EFUIState> {
             <h1>Extensible Frontends UI</h1>
             <form onSubmit={this.onSubmit}>
               <input name="name" placeholder="Component Name" />
-              <input name="url" placeholder="Component URL" />
+              <input name="js" placeholder="Component JS URL" />
+              <input name="css" placeholder="Component CSS URL" />
               <button>ADD</button>
             </form>
             {/* Components List  */}
             <table>
               <tr>
-                <th></th> <th>Name</th> <th>URL</th> <th>Source</th>
+                <th></th> <th>Name</th> <th>JS</th> <th>CSS</th> <th>Source</th>
               </tr>
               {Object.entries(this.state.components).map(
-                ([name, url]: [string, string], index: number) => (
+                ([name, info]: [string, EFComponentInfo], index: number) => (
                   <tr>
-                    <td>{index + 1}</td> <td>{name}</td> <td>{url}</td>
+                    <td>{index + 1}</td> <td>{name}</td>
+                    <td>{info.js || ""}</td>
+                    <td>{info.css || ""}</td>
                     {name in this.localOverrides ? (
                       <>
                         <td>Overrides</td>

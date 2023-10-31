@@ -47,6 +47,8 @@ export class ComponentRegistry implements IComponentRegistry {
   }): void {
     for (const [key, { js, css }] of Object.entries(overrides)) {
       if (this.registry[key]) {
+        if (!(typeof this.registry[key] === "object"))
+          this.registry[key] = { js, css };
         if (js) this.registry[key].js = js;
         if (css) this.registry[key].css = css;
       } else {

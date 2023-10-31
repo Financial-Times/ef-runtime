@@ -40,10 +40,7 @@ export class EFRuntime {
   ): Promise<void> {
     this.validateOptions(options);
 
-    await Promise.all([
-      this.moduleLoader.init(),
-      this.registry.fetch(options.systemCode as string),
-    ]);
+    await this.registry.fetch(options.systemCode as string);
 
     if (options.overrides) {
       this.registry.applyOverrides(options.overrides);
@@ -54,12 +51,13 @@ export class EFRuntime {
       this.registry.applyOverrides(JSON.parse(localOverrides));
     }
 
+    await this.moduleLoader.init();
     this.loadAll();
   }
 
   loadAll(): void {
-    const components = Object.keys(this.registry.getRegistry());
-    for (const component of components) {
+    const components = this.registry.getRegistry();
+    for (const component in components) {
       this.load(component).catch((error) =>
         console.error(`Error loading ${component}`, error)
       );

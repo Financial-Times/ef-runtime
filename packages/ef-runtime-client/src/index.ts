@@ -14,6 +14,7 @@ const moduleLoaderDependencies: IModuleLoaderDependencies = {
   document: document,
   loaderSrc:
     "https://cdnjs.cloudflare.com/ajax/libs/systemjs/6.14.2/system.min.js",
+  registry
 };
 
 const moduleLoader = new ModuleLoader(moduleLoaderDependencies);
