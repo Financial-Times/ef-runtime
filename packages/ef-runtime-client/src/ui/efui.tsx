@@ -1,11 +1,7 @@
 import { Component } from "preact/compat";
 import { IComponentRegistry } from "../ComponentRegistry";
 import styles from "./styles";
-
-interface EFComponentInfo {
-  js?: string;
-  css?: string;
-}
+import { EFComponentInfo } from "../types";
 
 type EFUIProps = { componentRegistry: IComponentRegistry };
 type EFUIState = {
@@ -28,7 +24,6 @@ export default class EFUI extends Component<EFUIProps, EFUIState> {
       needsRefresh: false,
       components: {
         ...this.componentRegistry.getRegistry(),
-        ...this.localOverrides,
       },
     };
   }
@@ -46,7 +41,6 @@ export default class EFUI extends Component<EFUIProps, EFUIState> {
       needsRefresh: true,
       components: {
         ...this.componentRegistry.getRegistry(),
-        ...this.localOverrides,
       },
     });
     localStorage.setItem("ef-overrides", JSON.stringify(this.localOverrides));
@@ -54,20 +48,23 @@ export default class EFUI extends Component<EFUIProps, EFUIState> {
 
   addOverrides = (name: string, info: EFComponentInfo) => {
     this.localOverrides[name] = info;
+    this.componentRegistry.applyOverrides(this.localOverrides);
     this.updateComponents();
   };
 
-  deleteOverride = (key: string) => {
-    delete this.localOverrides[key];
+  deleteOverride = (name: string) => {
+    delete this.localOverrides[name];
     this.updateComponents();
   };
 
   onSubmit = (e: any) => {
     e.preventDefault();
-    this.addOverrides(e.target.name.value, {
-      js: e.target.js.value,
-      css: e.target.css.value,
-    });
+    const js = e.target.js.value;
+    const css = e.target.css.value;
+    const info: EFComponentInfo = {};
+    if (js) info.js = js;
+    if (css) info.css = css;
+    this.addOverrides(e.target.name.value, info);
     e.target.reset();
   };
 

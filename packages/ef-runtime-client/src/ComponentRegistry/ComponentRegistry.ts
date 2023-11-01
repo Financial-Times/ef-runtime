@@ -1,11 +1,13 @@
+import { EFComponentInfo } from "../types";
+
 export interface IComponentRegistry {
   fetch(systemCode: string): Promise<void>;
-  getURL(component: string): { js: string; css: string } | undefined;
+  getURL(component: string): EFComponentInfo | undefined;
   getComponentKeys(): string[];
   applyOverrides(overrides: {
-    [propName: string]: { js: string; css: string };
+    [propName: string]: EFComponentInfo;
   }): void;
-  getRegistry(): { [key: string]: { js: string; css: string } };
+  getRegistry(): { [key: string]: EFComponentInfo };
 }
 
 export interface IComponentRegistryDependencies {
@@ -13,7 +15,7 @@ export interface IComponentRegistryDependencies {
 }
 
 export class ComponentRegistry implements IComponentRegistry {
-  private registry: { [propName: string]: { js: string; css: string } } = {};
+  private registry: { [propName: string]: EFComponentInfo } = {};
   private registryURL: string;
 
   constructor({ registryURL }: IComponentRegistryDependencies) {
@@ -30,7 +32,7 @@ export class ComponentRegistry implements IComponentRegistry {
     }
   }
 
-  getURL(component: string): { js: string; css: string } | undefined {
+  getURL(component: string): EFComponentInfo | undefined {
     return this.registry[component];
   }
 
@@ -38,17 +40,15 @@ export class ComponentRegistry implements IComponentRegistry {
     return Object.keys(this.registry);
   }
 
-  getRegistry(): { [key: string]: { js: string; css: string } } {
+  getRegistry(): { [key: string]: EFComponentInfo } {
     return { ...this.registry };
   }
 
   applyOverrides(overrides: {
-    [propName: string]: { js: string; css: string };
+    [propName: string]: EFComponentInfo;
   }): void {
     for (const [key, { js, css }] of Object.entries(overrides)) {
       if (this.registry[key]) {
-        if (!(typeof this.registry[key] === "object"))
-          this.registry[key] = { js, css };
         if (js) this.registry[key].js = js;
         if (css) this.registry[key].css = css;
       } else {
