@@ -1,3 +1,4 @@
+import { ComponentRegistry } from "../ComponentRegistry";
 import { ModuleLoader, IModuleLoaderDependencies } from "./ModuleLoader";
 
 describe("ModuleLoader", () => {
@@ -15,10 +16,16 @@ describe("ModuleLoader", () => {
       head: { append: appendMock },
     }) as unknown as Document;
 
+    const registryDependencies = {
+    registryURL: "https://ef-component-registry-51742754f2eb.herokuapp.com",
+    };
+    const registry = new ComponentRegistry(registryDependencies);
+
     moduleLoaderDependencies = {
       document: global.document,
       loaderSrc:
         "https://cdnjs.cloudflare.com/ajax/libs/systemjs/6.14.2/system.min.js",
+      registry
     };
 
     moduleLoader = new ModuleLoader(moduleLoaderDependencies);
