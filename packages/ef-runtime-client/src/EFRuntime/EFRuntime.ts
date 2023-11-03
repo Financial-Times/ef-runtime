@@ -1,4 +1,4 @@
-import { IComponentRegistry } from "../ComponentRegistry";
+import { IComponentRegistry, IComponentInfo } from "../ComponentRegistry";
 import { ModuleLoader } from "../ModuleLoader";
 import { StylingHandler } from "../StylingHandler";
 
@@ -6,26 +6,30 @@ export interface IRuntimeDependencies {
   componentRegistry: IComponentRegistry;
   moduleLoader: ModuleLoader;
   stylingHandler: StylingHandler;
+  document: Document;
 }
 
 export class EFRuntime {
   private registry: IComponentRegistry;
   private moduleLoader: ModuleLoader;
   private stylingHandler: StylingHandler;
+  private document: Document;
 
   constructor({
     componentRegistry,
     moduleLoader,
     stylingHandler,
+    document,
   }: IRuntimeDependencies) {
     this.registry = componentRegistry;
     this.moduleLoader = moduleLoader;
     this.stylingHandler = stylingHandler;
+    this.document = document;
   }
 
   private validateOptions(options: {
     systemCode?: string;
-    overrides?: { [propName: string]: string };
+    overrides?: { [propName: string]: IComponentInfo };
   }): void {
     if (!options.systemCode) {
       throw new Error("Must provide a systemCode option");
@@ -35,54 +39,38 @@ export class EFRuntime {
   async init(
     options: {
       systemCode?: string;
-      overrides?: { [propName: string]: string };
+      overrides?: { [propName: string]: IComponentInfo };
     } = {}
   ): Promise<void> {
     this.validateOptions(options);
-
-    await Promise.all([
-      this.moduleLoader.init(),
-      this.registry.fetch(options.systemCode as string),
-    ]);
-
+    await this.registry.fetch(options.systemCode as string);
     if (options.overrides) {
       this.registry.applyOverrides(options.overrides);
     }
-
-    this.loadAll();
+    await this.loadAll();
   }
 
-  loadAll(): void {
+  async loadAll(): Promise<void> {
     const components = Object.keys(this.registry.getRegistry());
-    for (const component of components) {
+    const loadPromises = components.map((component) =>
       this.load(component).catch((error) =>
         console.error(`Error loading ${component}`, error)
-      );
-    }
+      )
+    );
+    await Promise.all(loadPromises);
   }
 
   async load(component: string): Promise<void> {
-    const url = this.registry.getURL(component);
-    if (!url) {
+    const urlInfo = this.registry.getURL(component);
+    if (!urlInfo) {
       console.error(
         `Component ${component} was not found in the Component Registry`
       );
       return;
     }
-    this.stylingHandler.addStyling(url);
-    try {
-      const componentModule = await this.moduleLoader.importModule(`${url}/js`);
-      this.executeLifecycleMethods(componentModule);
-    } catch (error) {
-      console.error(
-        `Failed to load component ${component} using SystemJS`,
-        error
-      );
-    }
-  }
-
-  private async executeLifecycleMethods(componentModule: any): Promise<void> {
-    if (componentModule?.init) await componentModule.init();
-    if (componentModule?.mount) await componentModule.mount();
+    const { js, css } = urlInfo;
+    this.stylingHandler.addStyling(css);
+    const script = this.moduleLoader.createModuleScript(js);
+    document.body.appendChild(script);
   }
 }

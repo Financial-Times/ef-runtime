@@ -12,7 +12,7 @@ export class StylingHandler implements IStylingHandler {
   addStyling(url: string): void {
     const componentCSS = this.document.createElement("link");
     componentCSS.rel = "stylesheet";
-    componentCSS.href = `${url}/css`;
+    componentCSS.href = `${url}`;
     this.document.head.append(componentCSS);
   }
 }

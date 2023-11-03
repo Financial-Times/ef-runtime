@@ -1,1 +1,5 @@
-export { IComponentRegistry, ComponentRegistry } from "./ComponentRegistry";
+export {
+  IComponentInfo,
+  ComponentRegistry,
+  IComponentRegistry,
+} from "./ComponentRegistry";

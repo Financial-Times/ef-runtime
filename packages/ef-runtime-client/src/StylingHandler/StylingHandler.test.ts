@@ -29,7 +29,7 @@ describe("StylingHandler", () => {
     expect(createElementMock).toHaveBeenCalledWith("link");
     expect(linkElement).toEqual({
       rel: "stylesheet",
-      href: "http://example.com/css",
+      href: "http://example.com",
     });
     expect(appendMock).toHaveBeenCalledWith(linkElement);
   });

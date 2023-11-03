@@ -1,5 +1,5 @@
-import { ComponentRegistry } from "./ComponentRegistry";
-import { ModuleLoader, IModuleLoaderDependencies } from "./ModuleLoader";
+import { ComponentRegistry, IComponentInfo } from "./ComponentRegistry";
+import { ModuleLoader } from "./ModuleLoader";
 import { EFRuntime, IRuntimeDependencies } from "./EFRuntime";
 import { StylingHandler } from "./StylingHandler";
 
@@ -8,28 +8,21 @@ const registryDependencies = {
 };
 
 const registry = new ComponentRegistry(registryDependencies);
-
-const moduleLoaderDependencies: IModuleLoaderDependencies = {
-  document: document,
-  loaderSrc:
-    "https://cdnjs.cloudflare.com/ajax/libs/systemjs/6.14.2/system.min.js",
-};
-
-const moduleLoader = new ModuleLoader(moduleLoaderDependencies);
-
+const moduleLoader = new ModuleLoader();
 const stylingHandler = new StylingHandler(document);
 
 const runtimeDependencies: IRuntimeDependencies = {
   componentRegistry: registry,
   moduleLoader: moduleLoader,
   stylingHandler: stylingHandler,
+  document: document,
 };
 
 const runtime = new EFRuntime(runtimeDependencies);
 
 export async function init(options: {
   systemCode: string;
-  overrides?: { [propName: string]: string };
+  overrides?: { [propName: string]: IComponentInfo };
 }) {
   await runtime.init(options);
 }
