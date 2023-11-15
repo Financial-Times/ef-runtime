@@ -1,25 +1,27 @@
 import { EFComponentInfo } from "../types";
+import { Logger } from "../Logger";
 
 export interface IComponentRegistry {
   fetch(systemCode: string): Promise<void>;
   getURL(component: string): EFComponentInfo | undefined;
   getComponentKeys(): string[];
-  applyOverrides(overrides: {
-    [propName: string]: EFComponentInfo;
-  }): void;
+  applyOverrides(overrides: { [propName: string]: EFComponentInfo }): void;
   getRegistry(): { [key: string]: EFComponentInfo };
 }
 
 export interface IComponentRegistryDependencies {
   registryURL: string;
+  logger: Logger;
 }
 
 export class ComponentRegistry implements IComponentRegistry {
   private registry: { [propName: string]: EFComponentInfo } = {};
   private registryURL: string;
+  private logger: Logger;
 
-  constructor({ registryURL }: IComponentRegistryDependencies) {
+  constructor({ registryURL, logger }: IComponentRegistryDependencies) {
     this.registryURL = registryURL;
+    this.logger = logger;
   }
 
   async fetch(systemCode: string): Promise<void> {
@@ -28,7 +30,7 @@ export class ComponentRegistry implements IComponentRegistry {
       const data = await res.json();
       Object.assign(this.registry, data.imports);
     } catch (err) {
-      console.error("Unable to fetch Component Registry", err);
+      this.logger.error("Unable to fetch Component Registry", err);
     }
   }
 
@@ -44,9 +46,7 @@ export class ComponentRegistry implements IComponentRegistry {
     return { ...this.registry };
   }
 
-  applyOverrides(overrides: {
-    [propName: string]: EFComponentInfo;
-  }): void {
+  applyOverrides(overrides: { [propName: string]: EFComponentInfo }): void {
     for (const [key, { js, css }] of Object.entries(overrides)) {
       if (this.registry[key]) {
         if (js) this.registry[key].js = js;

@@ -1,26 +1,35 @@
 import { IComponentRegistry } from "../ComponentRegistry";
 import { ModuleLoader } from "../ModuleLoader";
 import { StylingHandler } from "../StylingHandler";
+import { Logger } from "../Logger";
 
 export interface IRuntimeDependencies {
   componentRegistry: IComponentRegistry;
   moduleLoader: ModuleLoader;
   stylingHandler: StylingHandler;
+  logger: Logger;
+  localStorage: Storage;
 }
 
 export class EFRuntime {
   private registry: IComponentRegistry;
   private moduleLoader: ModuleLoader;
   private stylingHandler: StylingHandler;
+  private logger: Logger;
+  private localStorage: Storage;
 
   constructor({
     componentRegistry,
     moduleLoader,
     stylingHandler,
+    logger,
+    localStorage,
   }: IRuntimeDependencies) {
     this.registry = componentRegistry;
     this.moduleLoader = moduleLoader;
     this.stylingHandler = stylingHandler;
+    this.logger = logger;
+    this.localStorage = localStorage;
   }
 
   private validateOptions(options: {
@@ -28,6 +37,7 @@ export class EFRuntime {
     overrides?: { [propName: string]: { js: string; css: string } };
   }): void {
     if (!options.systemCode) {
+      this.logger.error("Must provide a systemCode option");
       throw new Error("Must provide a systemCode option");
     }
   }
@@ -46,7 +56,7 @@ export class EFRuntime {
       this.registry.applyOverrides(options.overrides);
     }
 
-    const localOverrides = localStorage.getItem("ef-overrides");
+    const localOverrides = this.localStorage.getItem("ef-overrides");
     if (localOverrides) {
       this.registry.applyOverrides(JSON.parse(localOverrides));
     }
@@ -59,7 +69,7 @@ export class EFRuntime {
     const components = this.registry.getRegistry();
     for (const component in components) {
       this.load(component).catch((error) =>
-        console.error(`Error loading ${component}`, error)
+        this.logger.error(`Error loading ${component}`, error)
       );
     }
   }
@@ -77,7 +87,7 @@ export class EFRuntime {
   private getComponentURL(component: string) {
     const urlInfo = this.registry.getURL(component);
     if (!urlInfo) {
-      console.error(`Failed to retrieve URL for component ${component}`);
+      this.logger.error(`Failed to retrieve URL for component ${component}`);
     }
     return urlInfo;
   }
@@ -101,7 +111,7 @@ export class EFRuntime {
     }
 
     if (!isValid) {
-      console.error(
+      this.logger.error(
         `Missing ${missingParts.join(" and ")} URL for component ${component}`
       );
     }
@@ -115,7 +125,7 @@ export class EFRuntime {
       const componentModule = await this.moduleLoader.importModule(js);
       this.executeLifecycleMethods(componentModule);
     } catch (error) {
-      console.error(
+      this.logger.error(
         `Failed to load component ${component} using SystemJS`,
         error
       );

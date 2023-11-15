@@ -58,6 +58,26 @@ EFRuntime.init({
 });
 ```
 
+### Custom Logging
+
+The runtime allows you to implement custom logging. You can utilize this feature to integrate your own logging system or to assist in debugging. Pass a logging object during initialisation with custom functions for `info`, `warn`, `error`, and `debug`.
+
+Here's an example:
+
+```js
+EFRuntime.init({
+  systemCode: "ef-demo-host",
+  logging: {
+    info: (message, ...args) => customLogger.info(message, ...args),
+    warn: (message, ...args) => customLogger.warn(message, ...args),
+    error: (message, ...args) => customLogger.error(message, ...args),
+    debug: (message, ...args) => customLogger.debug(message, ...args),
+  },
+});
+```
+
+If you do not provide specific functions, default console methods are used for errors, and other logs are suppressed.
+
 ## Running Tests
 
 Execute the test suite with the following command:
