@@ -1,15 +1,20 @@
+import { IComponentRegistry } from "../ComponentRegistry";
+
 export interface IModuleLoaderDependencies {
   document: Document;
   loaderSrc: string;
+  registry: IComponentRegistry;
 }
 
 export class ModuleLoader {
   private document: Document;
   private loaderSrc: string;
+  private registry: IComponentRegistry;
 
-  constructor({ document, loaderSrc }: IModuleLoaderDependencies) {
+  constructor({ document, loaderSrc, registry }: IModuleLoaderDependencies) {
     this.document = document;
     this.loaderSrc = loaderSrc;
+    this.registry = registry;
   }
 
   async init(): Promise<void> {

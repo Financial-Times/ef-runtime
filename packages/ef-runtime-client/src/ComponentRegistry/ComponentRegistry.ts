@@ -1,11 +1,12 @@
 import { logger } from "../utils/logger";
+import { EFComponentInfo } from "../types";
 
 export interface IComponentRegistry {
   fetch(systemCode: string): Promise<void>;
-  getURL(component: string): string | undefined;
+  getComponentInfo(component: string): EFComponentInfo | undefined;
   getComponentKeys(): string[];
-  applyOverrides(overrides: { [propName: string]: string }): void;
-  getRegistry(): { [key: string]: string };
+  applyOverrides(overrides: { [propName: string]: EFComponentInfo }): void;
+  getRegistry(): { [key: string]: EFComponentInfo };
 }
 
 export interface IComponentRegistryDependencies {
@@ -13,7 +14,7 @@ export interface IComponentRegistryDependencies {
 }
 
 export class ComponentRegistry implements IComponentRegistry {
-  private registry: { [propName: string]: string } = {};
+  private registry: { [propName: string]: EFComponentInfo } = {};
   private initialised: boolean;
   private registryURL: string;
 
@@ -33,7 +34,7 @@ export class ComponentRegistry implements IComponentRegistry {
     }
   }
 
-  getURL(component: string): string | undefined {
+  getComponentInfo(component: string): EFComponentInfo | undefined {
     if (!this.initialised) {
       logger.warn(
         "Unable to get component URL. Component Registry was not initialised yet"
@@ -53,7 +54,7 @@ export class ComponentRegistry implements IComponentRegistry {
     return Object.keys(this.registry);
   }
 
-  getRegistry(): { [key: string]: string } {
+  getRegistry(): { [key: string]: EFComponentInfo } {
     if (!this.initialised) {
       logger.warn(
         "Unable to get Registry. Component Registry was not initialised yet"
@@ -63,17 +64,14 @@ export class ComponentRegistry implements IComponentRegistry {
     return { ...this.registry };
   }
 
-  applyOverrides(overrides: { [propName: string]: string }): void {
-    try {
-      Object.assign(this.registry, overrides);
-      if (Object.keys(overrides).length > 0) {
-        // if override includes at least one entry
-        // considers the components initialised even
-        // if fetch was not called
-        this.initialised = true;
+  applyOverrides(overrides: { [propName: string]: EFComponentInfo }): void {
+    for (const [key, { js, css }] of Object.entries(overrides)) {
+      if (this.registry[key]) {
+        if (js) this.registry[key].js = js;
+        if (css) this.registry[key].css = css;
+      } else {
+        this.registry[key] = { js: js || "", css: css || "" };
       }
-    } catch (err) {
-      logger.error("Failed to apply overrides", err);
     }
   }
 }

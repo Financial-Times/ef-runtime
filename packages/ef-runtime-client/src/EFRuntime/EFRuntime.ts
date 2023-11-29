@@ -26,7 +26,7 @@ export class EFRuntime {
 
   private validateOptions(options: {
     systemCode?: string;
-    overrides?: { [propName: string]: string };
+    overrides?: { [propName: string]: { js: string; css: string } };
   }): void {
     if (!options.systemCode) {
       throw new Error("Must provide a systemCode option");
@@ -36,47 +36,87 @@ export class EFRuntime {
   async init(
     options: {
       systemCode?: string;
-      overrides?: { [propName: string]: string };
+      overrides?: { [propName: string]: { js: string; css: string } };
     } = {}
   ): Promise<void> {
     this.validateOptions(options);
 
-    await Promise.all([
-      this.moduleLoader.init(),
-      this.registry.fetch(options.systemCode as string),
-    ]);
+    await this.registry.fetch(options.systemCode as string);
 
     if (options.overrides) {
       this.registry.applyOverrides(options.overrides);
     }
+    const localOverrides = localStorage.getItem("ef-overrides");
+    if (localOverrides) {
+      this.registry.applyOverrides(JSON.parse(localOverrides));
+    }
 
-    return this.loadAll();
+    await this.moduleLoader.init();
+    this.loadAll();
   }
 
   async loadAll(): Promise<void> {
-    const components = Object.keys(this.registry.getRegistry());
-    for (const component of components) {
+    const components = this.registry.getRegistry();
+    for (const component in components) {
       this.load(component).catch((error) =>
         logger.error(`Failed to initialise and mount ${component}`, error)
       );
     }
     await Promise.allSettled(
-      components.map((component) => this.load(component))
+      Object.keys(components).map((component) => this.load(component))
     );
   }
 
   async load(component: string): Promise<void> {
-    const url = this.registry.getURL(component);
-    if (!url) {
-      logger.error(
-        `Component ${component} was not found in the Component Registry`
-      );
-      return;
+    const urlInfo = this.getComponentURL(component);
+    if (!urlInfo) return;
+
+    const { js, css } = urlInfo;
+    if (!this.isValidURL(js, css, component)) return;
+
+    await this.loadComponent(js, css, component);
+  }
+
+  private getComponentURL(component: string) {
+    const urlInfo = this.registry.getComponentInfo(component);
+    if (!urlInfo) {
+      console.error(`Failed to retrieve URL for component ${component}`);
     }
+    return urlInfo;
+  }
+
+  private isValidURL(
+    js: string | null,
+    css: string | null,
+    component: string
+  ): boolean {
+    let isValid = true;
+    let missingParts: string[] = [];
+
+    if (!js) {
+      missingParts.push("JS");
+      isValid = false;
+    }
+
+    if (!css) {
+      missingParts.push("CSS");
+      isValid = false;
+    }
+
+    if (!isValid) {
+      console.error(
+        `Missing ${missingParts.join(" and ")} URL for component ${component}`
+      );
+    }
+
+    return isValid;
+  }
+
+  private async loadComponent(js: string, css: string, component: string) {
+    this.stylingHandler.addStyling(css);
     try {
-      this.stylingHandler.addStyling(url);
-      const componentModule = await this.moduleLoader.importModule(`${url}/js`);
-      await this.executeLifecycleMethods(componentModule);
+      const componentModule = await this.moduleLoader.importModule(js);
+      this.executeLifecycleMethods(componentModule);
     } catch (error) {
       logger.error(
         `Error when mounting component ${component} using SystemJS`,
