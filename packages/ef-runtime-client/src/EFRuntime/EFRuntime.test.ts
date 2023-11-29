@@ -129,12 +129,15 @@ describe("EFRuntime", () => {
       await runtime.load("some-component");
 
       expect(spyLogger).toHaveBeenCalledWith(
-        "Component some-component was not found in the Component Registry"
+        "Failed to retrieve Info for component some-component"
       );
     });
 
     it("logs an error if js is missing from registry", async () => {
-      mockRegistry.getComponentInfo.mockReturnValue({ js: null, css: "some-css-url" });
+      mockRegistry.getComponentInfo.mockReturnValue({
+        js: null,
+        css: "some-css-url",
+      });
       console.error = jest.fn();
 
       await runtime.load("some-component");
@@ -145,7 +148,10 @@ describe("EFRuntime", () => {
     });
 
     it("logs an error if css is missing from registry", async () => {
-      mockRegistry.getComponentInfo.mockReturnValue({ js: "some-js-url", css: null });
+      mockRegistry.getComponentInfo.mockReturnValue({
+        js: "some-js-url",
+        css: null,
+      });
       console.error = jest.fn();
 
       await runtime.load("some-component");

@@ -3,23 +3,23 @@ import { ComponentRegistry } from "./index";
 describe("ComponentRegistry", () => {
   let registry: ComponentRegistry;
 
-  beforeEach(() => {
+  global.fetch = jest.fn().mockImplementation(() =>
+    Promise.resolve({
+      json: () =>
+        Promise.resolve({
+          imports: {
+            "ef-demo-component": { js: "js-url", css: "css-url" },
+          },
+        }),
+    })
+  );
+
+  beforeEach(async () => {
     registry = new ComponentRegistry({ registryURL: "http://localhost:3003" });
+    await registry.fetch("systemCode");
   });
 
   it("should fetch systemCode", async () => {
-    global.fetch = jest.fn().mockImplementation(() =>
-      Promise.resolve({
-        json: () =>
-          Promise.resolve({
-            imports: {
-              "ef-demo-component": { js: "js-url", css: "css-url" },
-            },
-          }),
-      })
-    );
-
-    await registry.fetch("systemCode");
     expect(registry.getComponentInfo("ef-demo-component")).toEqual({
       js: "js-url",
       css: "css-url",

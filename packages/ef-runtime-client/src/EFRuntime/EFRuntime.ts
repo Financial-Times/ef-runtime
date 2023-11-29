@@ -68,21 +68,16 @@ export class EFRuntime {
   }
 
   async load(component: string): Promise<void> {
-    const urlInfo = this.getComponentURL(component);
-    if (!urlInfo) return;
+    const urlInfo = this.registry.getComponentInfo(component);
+    if (!urlInfo) {
+      logger.error(`Failed to retrieve Info for component ${component}`);
+      return;
+    }
 
     const { js, css } = urlInfo;
     if (!this.isValidURL(js, css, component)) return;
 
     await this.loadComponent(js, css, component);
-  }
-
-  private getComponentURL(component: string) {
-    const urlInfo = this.registry.getComponentInfo(component);
-    if (!urlInfo) {
-      console.error(`Failed to retrieve URL for component ${component}`);
-    }
-    return urlInfo;
   }
 
   private isValidURL(
