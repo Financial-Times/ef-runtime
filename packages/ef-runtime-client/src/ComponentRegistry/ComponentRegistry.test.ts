@@ -1,4 +1,4 @@
-import { ComponentRegistry, IComponentInfo } from "./index";
+import { ComponentRegistry } from "./index";
 
 describe("ComponentRegistry", () => {
   let registry: ComponentRegistry;
@@ -12,15 +12,17 @@ describe("ComponentRegistry", () => {
       Promise.resolve({
         json: () =>
           Promise.resolve({
-            imports: { "ef-demo-component": { js: "url-js", css: "url-css" } },
+            imports: {
+              "ef-demo-component": { js: "js-url", css: "css-url" },
+            },
           }),
       })
     );
 
     await registry.fetch("systemCode");
     expect(registry.getURL("ef-demo-component")).toEqual({
-      js: "url-js",
-      css: "url-css",
+      js: "js-url",
+      css: "css-url",
     });
   });
 
@@ -29,17 +31,29 @@ describe("ComponentRegistry", () => {
   });
 
   it("should apply overrides", () => {
-    const override: IComponentInfo = { js: "override-js", css: "override-css" };
-    registry.applyOverrides({ "ef-demo-component": override });
-    expect(registry.getURL("ef-demo-component")).toEqual(override);
+    registry.applyOverrides({
+      "ef-demo-component": {
+        js: "override-js-url",
+        css: "override-css-url",
+      },
+    });
+    expect(registry.getURL("ef-demo-component")).toEqual({
+      js: "override-js-url",
+      css: "override-css-url",
+    });
   });
 
   it("should return component keys", () => {
-    const overrides: { [key: string]: IComponentInfo } = {
-      "ef-demo-component": { js: "override-js", css: "override-css" },
-      "another-component": { js: "another-js", css: "another-css" },
-    };
-    registry.applyOverrides(overrides);
+    registry.applyOverrides({
+      "ef-demo-component": {
+        js: "override-js-url",
+        css: "override-css-url",
+      },
+      "another-component": {
+        js: "another-js-url",
+        css: "another-css-url",
+      },
+    });
 
     const keys = registry.getComponentKeys();
     expect(keys).toEqual(["ef-demo-component", "another-component"]);

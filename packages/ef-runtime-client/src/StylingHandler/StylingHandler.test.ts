@@ -24,12 +24,13 @@ describe("StylingHandler", () => {
     const linkElement: { rel?: string; href?: string } = {};
     createElementMock.mockReturnValue(linkElement);
 
-    stylingHandler.addStyling("http://example.com");
+    const testUrl = "http://example.com";
+    stylingHandler.addStyling(testUrl);
 
     expect(createElementMock).toHaveBeenCalledWith("link");
     expect(linkElement).toEqual({
       rel: "stylesheet",
-      href: "http://example.com",
+      href: testUrl,
     });
     expect(appendMock).toHaveBeenCalledWith(linkElement);
   });

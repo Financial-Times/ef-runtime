@@ -1,5 +1,5 @@
 import { EFRuntime, IRuntimeDependencies } from "./EFRuntime";
-import { IComponentRegistry, IComponentInfo } from "../ComponentRegistry";
+import { IComponentRegistry } from "../ComponentRegistry";
 import { ModuleLoader } from "../ModuleLoader";
 import { StylingHandler } from "../StylingHandler";
 
@@ -21,7 +21,30 @@ class MockModuleLoader extends ModuleLoader {
   createModuleScript = jest.fn();
 }
 
-describe.only("EFRuntime", () => {
+class MockLocalStorage {
+  private store: { [key: string]: string };
+  constructor() {
+    this.store = {};
+  }
+
+  clear() {
+    this.store = {};
+  }
+
+  getItem(key: string) {
+    return this.store[key] || null;
+  }
+
+  setItem(key: string, value: string) {
+    this.store[key] = String(value);
+  }
+
+  removeItem(key: string) {
+    delete this.store[key];
+  }
+}
+
+describe("EFRuntime", () => {
   let mockRegistry: jest.Mocked<IComponentRegistry>;
   let mockModuleLoader: MockModuleLoader;
   let mockStylingHandler: MockStylingHandler;
@@ -52,6 +75,13 @@ describe.only("EFRuntime", () => {
       },
     } as unknown as Document;
 
+    const mockLocalStorage = new MockLocalStorage() as unknown as Storage;
+    mockLocalStorage.setItem(
+      "ef-overrides",
+      JSON.stringify({ "some-component": "some-url" })
+    );
+    global.localStorage = mockLocalStorage;
+
     mockModuleLoader = new MockModuleLoader();
     mockStylingHandler = new MockStylingHandler(mockDocument);
 
@@ -72,15 +102,18 @@ describe.only("EFRuntime", () => {
       );
     });
 
-    it("fetches from the registry using the systemCode", async () => {
+    it("initialises the module loader and fetches registry", async () => {
       await runtime.init({ systemCode: "some-system-code" });
 
       expect(mockRegistry.fetch).toHaveBeenCalledWith("some-system-code");
     });
 
     it("applies overrides if provided", async () => {
-      const overrides: { [propName: string]: IComponentInfo } = {
-        "some-component": { js: "js-override", css: "css-override" },
+      const overrides = {
+        "some-component": {
+          js: "some-js-url",
+          css: "some-css-url",
+        },
       };
       await runtime.init({ systemCode: "some-system-code", overrides });
 
@@ -121,18 +154,57 @@ describe.only("EFRuntime", () => {
       await runtime.load("missing-component");
 
       expect(console.error).toHaveBeenCalledWith(
-        "Component missing-component was not found in the Component Registry"
+        "Failed to retrieve URL for component missing-component"
       );
     });
 
-    it("adds styling and JS if the component is found in the registry", async () => {
-      mockRegistry.getURL.mockReturnValue({ js: "some-js", css: "some-css" });
+    it("logs an error if js is missing from registry", async () => {
+      mockRegistry.getURL.mockReturnValue({ js: null, css: "some-css-url" });
+      console.error = jest.fn();
 
       await runtime.load("some-component");
 
-      expect(mockStylingHandler.addStyling).toHaveBeenCalledWith("some-css");
+      expect(console.error).toHaveBeenCalledWith(
+        "Missing JS URL for component some-component"
+      );
+    });
+
+    it("logs an error if css is missing from registry", async () => {
+      mockRegistry.getURL.mockReturnValue({ js: "some-js-url", css: null });
+      console.error = jest.fn();
+
+      await runtime.load("some-component");
+
+      expect(console.error).toHaveBeenCalledWith(
+        "Missing CSS URL for component some-component"
+      );
+    });
+
+    it("logs an error if both js and css are missing from registry", async () => {
+      mockRegistry.getURL.mockReturnValue({ js: null, css: null });
+      console.error = jest.fn();
+
+      await runtime.load("some-component");
+
+      expect(console.error).toHaveBeenCalledWith(
+        "Missing JS and CSS URL for component some-component"
+      );
+    });
+
+    it("adds styling and imports module if component is found in registry", async () => {
+      mockRegistry.getURL.mockReturnValue({
+        js: "some-js-url",
+        css: "some-css-url",
+      });
+      mockModuleLoader.createModuleScript.mockResolvedValue({});
+
+      await runtime.load("some-component");
+
+      expect(mockStylingHandler.addStyling).toHaveBeenCalledWith(
+        "some-css-url"
+      );
       expect(mockModuleLoader.createModuleScript).toHaveBeenCalledWith(
-        "some-js"
+        "some-js-url"
       );
     });
   });

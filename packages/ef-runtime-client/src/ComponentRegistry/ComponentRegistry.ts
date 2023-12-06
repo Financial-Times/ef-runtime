@@ -1,14 +1,11 @@
-export interface IComponentInfo {
-  js: string;
-  css: string;
-}
+import { EFComponentInfo } from "../types";
 
 export interface IComponentRegistry {
   fetch(systemCode: string): Promise<void>;
-  getURL(component: string): IComponentInfo | undefined;
+  getURL(component: string): EFComponentInfo | undefined;
   getComponentKeys(): string[];
-  applyOverrides(overrides: { [propName: string]: IComponentInfo }): void;
-  getRegistry(): { [key: string]: IComponentInfo };
+  applyOverrides(overrides: { [propName: string]: EFComponentInfo }): void;
+  getRegistry(): { [key: string]: EFComponentInfo };
 }
 
 export interface IComponentRegistryDependencies {
@@ -16,7 +13,7 @@ export interface IComponentRegistryDependencies {
 }
 
 export class ComponentRegistry implements IComponentRegistry {
-  private registry: { [propName: string]: IComponentInfo } = {};
+  private registry: { [propName: string]: EFComponentInfo } = {};
   private registryURL: string;
 
   constructor({ registryURL }: IComponentRegistryDependencies) {
@@ -33,7 +30,7 @@ export class ComponentRegistry implements IComponentRegistry {
     }
   }
 
-  getURL(component: string): IComponentInfo | undefined {
+  getURL(component: string): EFComponentInfo | undefined {
     return this.registry[component];
   }
 
@@ -41,24 +38,17 @@ export class ComponentRegistry implements IComponentRegistry {
     return Object.keys(this.registry);
   }
 
-  getRegistry(): { [key: string]: IComponentInfo } {
+  getRegistry(): { [key: string]: EFComponentInfo } {
     return { ...this.registry };
   }
 
-  applyOverrides(overrides: { [propName: string]: IComponentInfo }): void {
-    for (const key in overrides) {
-      if (Object.prototype.hasOwnProperty.call(overrides, key)) {
-        const existing = this.registry[key];
-        const override = overrides[key];
-
-        if (existing) {
-          this.registry[key] = {
-            js: override.js || existing.js,
-            css: override.css || existing.css,
-          };
-        } else {
-          this.registry[key] = override;
-        }
+  applyOverrides(overrides: { [propName: string]: EFComponentInfo }): void {
+    for (const [key, { js, css }] of Object.entries(overrides)) {
+      if (this.registry[key]) {
+        if (js) this.registry[key].js = js;
+        if (css) this.registry[key].css = css;
+      } else {
+        this.registry[key] = { js: js || "", css: css || "" };
       }
     }
   }

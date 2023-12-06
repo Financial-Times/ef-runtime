@@ -1,6 +1,7 @@
-import { IComponentRegistry, IComponentInfo } from "../ComponentRegistry";
+import { IComponentRegistry } from "../ComponentRegistry";
 import { ModuleLoader } from "../ModuleLoader";
 import { StylingHandler } from "../StylingHandler";
+import { EFComponentInfo } from "../types";
 
 export interface IRuntimeDependencies {
   componentRegistry: IComponentRegistry;
@@ -29,7 +30,7 @@ export class EFRuntime {
 
   private validateOptions(options: {
     systemCode?: string;
-    overrides?: { [propName: string]: IComponentInfo };
+    overrides?: { [propName: string]: EFComponentInfo };
   }): void {
     if (!options.systemCode) {
       throw new Error("Must provide a systemCode option");
@@ -39,7 +40,7 @@ export class EFRuntime {
   async init(
     options: {
       systemCode?: string;
-      overrides?: { [propName: string]: IComponentInfo };
+      overrides?: { [propName: string]: EFComponentInfo };
     } = {}
   ): Promise<void> {
     this.validateOptions(options);
@@ -61,16 +62,65 @@ export class EFRuntime {
   }
 
   async load(component: string): Promise<void> {
+    const urlInfo = this.getComponentURL(component);
+    if (!urlInfo) return;
+
+    const { js, css } = urlInfo;
+    if (!this.isValidURL(js, css, component)) return;
+
+    await this.loadComponent(js, css, component);
+  }
+
+  private getComponentURL(component: string) {
     const urlInfo = this.registry.getURL(component);
     if (!urlInfo) {
-      console.error(
-        `Component ${component} was not found in the Component Registry`
-      );
-      return;
+      console.error(`Failed to retrieve URL for component ${component}`);
     }
-    const { js, css } = urlInfo;
+    return urlInfo;
+  }
+
+  private isValidURL(
+    js: string | null,
+    css: string | null,
+    component: string
+  ): boolean {
+    let isValid = true;
+    let missingParts: string[] = [];
+
+    if (!js) {
+      missingParts.push("JS");
+      isValid = false;
+    }
+
+    if (!css) {
+      missingParts.push("CSS");
+      isValid = false;
+    }
+
+    if (!isValid) {
+      console.error(
+        `Missing ${missingParts.join(" and ")} URL for component ${component}`
+      );
+    }
+
+    return isValid;
+  }
+
+  private async loadComponent(js: string, css: string, component: string) {
     this.stylingHandler.addStyling(css);
-    const script = this.moduleLoader.createModuleScript(js);
-    document.body.appendChild(script);
+    try {
+      const componentModule = this.moduleLoader.createModuleScript(js);
+      this.executeLifecycleMethods(componentModule);
+    } catch (error) {
+      console.error(
+        `Failed to load component ${component} using SystemJS`,
+        error
+      );
+    }
+  }
+
+  private async executeLifecycleMethods(componentModule: any): Promise<void> {
+    if (componentModule?.init) await componentModule.init();
+    if (componentModule?.mount) await componentModule.mount();
   }
 }
