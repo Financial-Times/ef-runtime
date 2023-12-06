@@ -1,4 +1,5 @@
 import { EFComponentInfo } from "../types";
+import { Logger } from "../Logger";
 
 export interface IComponentRegistry {
   fetch(systemCode: string): Promise<void>;
@@ -10,14 +11,17 @@ export interface IComponentRegistry {
 
 export interface IComponentRegistryDependencies {
   registryURL: string;
+  logger: Logger;
 }
 
 export class ComponentRegistry implements IComponentRegistry {
   private registry: { [propName: string]: EFComponentInfo } = {};
   private registryURL: string;
+  private logger: Logger;
 
-  constructor({ registryURL }: IComponentRegistryDependencies) {
+  constructor({ registryURL, logger }: IComponentRegistryDependencies) {
     this.registryURL = registryURL;
+    this.logger = logger;
   }
 
   async fetch(systemCode: string): Promise<void> {
@@ -26,7 +30,7 @@ export class ComponentRegistry implements IComponentRegistry {
       const data = await res.json();
       Object.assign(this.registry, data.imports);
     } catch (err) {
-      console.error("Unable to fetch Component Registry", err);
+      this.logger.error("Unable to fetch Component Registry", err);
     }
   }
 

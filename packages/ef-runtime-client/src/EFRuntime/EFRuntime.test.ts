@@ -2,6 +2,8 @@ import { EFRuntime, IRuntimeDependencies } from "./EFRuntime";
 import { IComponentRegistry } from "../ComponentRegistry";
 import { ModuleLoader } from "../ModuleLoader";
 import { StylingHandler } from "../StylingHandler";
+import { Logger } from "../Logger";
+import { MockLogger } from "../Logger/__mocks__";
 
 const globalAny: any = global;
 globalAny.document = {
@@ -11,8 +13,8 @@ globalAny.document = {
 };
 
 class MockStylingHandler extends StylingHandler {
-  constructor(document: Document) {
-    super(document);
+  constructor(document: Document, logger: Logger) {
+    super(document, logger);
   }
   addStyling = jest.fn();
 }
@@ -21,35 +23,15 @@ class MockModuleLoader extends ModuleLoader {
   createModuleScript = jest.fn();
 }
 
-class MockLocalStorage {
-  private store: { [key: string]: string };
-  constructor() {
-    this.store = {};
-  }
-
-  clear() {
-    this.store = {};
-  }
-
-  getItem(key: string) {
-    return this.store[key] || null;
-  }
-
-  setItem(key: string, value: string) {
-    this.store[key] = String(value);
-  }
-
-  removeItem(key: string) {
-    delete this.store[key];
-  }
-}
-
 describe("EFRuntime", () => {
   let mockRegistry: jest.Mocked<IComponentRegistry>;
   let mockModuleLoader: MockModuleLoader;
   let mockStylingHandler: MockStylingHandler;
+  let logger: Logger;
   let dependencies: IRuntimeDependencies;
   let runtime: EFRuntime;
+  let mockLocalStorage: Storage;
+  let mockLocalStorageMock: Record<string, string>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -75,21 +57,37 @@ describe("EFRuntime", () => {
       },
     } as unknown as Document;
 
-    const mockLocalStorage = new MockLocalStorage() as unknown as Storage;
-    mockLocalStorage.setItem(
-      "ef-overrides",
-      JSON.stringify({ "some-component": "some-url" })
-    );
-    global.localStorage = mockLocalStorage;
+    logger = new MockLogger() as unknown as Logger;
 
     mockModuleLoader = new MockModuleLoader();
-    mockStylingHandler = new MockStylingHandler(mockDocument);
+    mockStylingHandler = new MockStylingHandler(mockDocument, logger);
+
+    logger = new MockLogger() as unknown as Logger;
+
+    mockLocalStorageMock = {};
+
+    mockLocalStorage = {
+      getItem: jest.fn().mockImplementation((key) => mockLocalStorageMock[key]),
+      setItem: jest.fn().mockImplementation((key, value) => {
+        mockLocalStorageMock[key] = value;
+      }),
+      clear: jest.fn().mockImplementation(() => {
+        mockLocalStorageMock = {};
+      }),
+      removeItem: jest.fn().mockImplementation((key) => {
+        delete mockLocalStorageMock[key];
+      }),
+      length: 0,
+      key: jest.fn(),
+    } as unknown as Storage;
 
     dependencies = {
       componentRegistry: mockRegistry,
       moduleLoader: mockModuleLoader,
       stylingHandler: mockStylingHandler,
       document: mockDocument,
+      logger: logger,
+      localStorage: mockLocalStorage,
     };
 
     runtime = new EFRuntime(dependencies);
@@ -149,44 +147,40 @@ describe("EFRuntime", () => {
   describe("load", () => {
     it("logs an error if the component is not found in the registry", async () => {
       mockRegistry.getURL.mockReturnValue(undefined);
-      console.error = jest.fn();
 
       await runtime.load("missing-component");
 
-      expect(console.error).toHaveBeenCalledWith(
+      expect(logger.error).toHaveBeenCalledWith(
         "Failed to retrieve URL for component missing-component"
       );
     });
 
     it("logs an error if js is missing from registry", async () => {
       mockRegistry.getURL.mockReturnValue({ js: null, css: "some-css-url" });
-      console.error = jest.fn();
 
       await runtime.load("some-component");
 
-      expect(console.error).toHaveBeenCalledWith(
+      expect(logger.error).toHaveBeenCalledWith(
         "Missing JS URL for component some-component"
       );
     });
 
     it("logs an error if css is missing from registry", async () => {
       mockRegistry.getURL.mockReturnValue({ js: "some-js-url", css: null });
-      console.error = jest.fn();
 
       await runtime.load("some-component");
 
-      expect(console.error).toHaveBeenCalledWith(
+      expect(logger.error).toHaveBeenCalledWith(
         "Missing CSS URL for component some-component"
       );
     });
 
     it("logs an error if both js and css are missing from registry", async () => {
       mockRegistry.getURL.mockReturnValue({ js: null, css: null });
-      console.error = jest.fn();
 
       await runtime.load("some-component");
 
-      expect(console.error).toHaveBeenCalledWith(
+      expect(logger.error).toHaveBeenCalledWith(
         "Missing JS and CSS URL for component some-component"
       );
     });
