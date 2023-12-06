@@ -1,10 +1,18 @@
-import { ComponentRegistry } from "./index";
+import { ComponentRegistry } from "./ComponentRegistry";
+import { Logger } from "../Logger";
+import { MockLogger } from "../Logger/__mocks__";
 
 describe("ComponentRegistry", () => {
   let registry: ComponentRegistry;
+  let logger: Logger;
 
   beforeEach(() => {
-    registry = new ComponentRegistry({ registryURL: "http://localhost:3003" });
+    logger = new MockLogger() as unknown as Logger;
+
+    registry = new ComponentRegistry({
+      registryURL: "http://localhost:3003",
+      logger: logger,
+    });
   });
 
   it("should fetch systemCode", async () => {
@@ -24,6 +32,19 @@ describe("ComponentRegistry", () => {
       js: "js-url",
       css: "css-url",
     });
+    expect(logger.info).not.toHaveBeenCalled();
+  });
+
+  it("should handle fetch error with logging", async () => {
+    global.fetch = jest
+      .fn()
+      .mockImplementation(() => Promise.reject(new Error("Fetch error")));
+
+    await registry.fetch("systemCode");
+    expect(logger.error).toHaveBeenCalledWith(
+      "Unable to fetch Component Registry",
+      expect.any(Error)
+    );
   });
 
   it("should get undefined for non-existent component", () => {
