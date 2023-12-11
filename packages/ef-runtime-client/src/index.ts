@@ -1,5 +1,5 @@
 import { ComponentRegistry } from "./ComponentRegistry";
-import { ModuleLoader, IModuleLoaderDependencies } from "./ModuleLoader";
+import { ModuleLoader } from "./ModuleLoader";
 import { EFRuntime, IRuntimeDependencies } from "./EFRuntime";
 import { StylingHandler } from "./StylingHandler";
 import { Logger } from "./Logger";
@@ -43,15 +43,7 @@ export async function init(options: {
     logger: logger,
   });
 
-  const moduleLoaderDependencies: IModuleLoaderDependencies = {
-    document: document,
-    loaderSrc:
-      "https://cdnjs.cloudflare.com/ajax/libs/systemjs/6.14.2/system.min.js",
-    registry: registry,
-    logger: logger,
-  };
-
-  const moduleLoader = new ModuleLoader(moduleLoaderDependencies);
+  const moduleLoader = new ModuleLoader();
 
   const stylingHandler = new StylingHandler(document, logger);
 
@@ -59,6 +51,7 @@ export async function init(options: {
     componentRegistry: registry,
     moduleLoader: moduleLoader,
     stylingHandler: stylingHandler,
+    document,
     logger: logger,
     localStorage: window.localStorage,
   };

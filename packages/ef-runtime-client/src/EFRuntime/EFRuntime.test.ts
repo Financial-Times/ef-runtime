@@ -1,9 +1,16 @@
 import { EFRuntime, IRuntimeDependencies } from "./EFRuntime";
 import { IComponentRegistry } from "../ComponentRegistry";
-import { ModuleLoader, IModuleLoaderDependencies } from "../ModuleLoader";
+import { ModuleLoader } from "../ModuleLoader";
 import { StylingHandler } from "../StylingHandler";
 import { Logger } from "../Logger";
 import { MockLogger } from "../Logger/__mocks__";
+
+const globalAny: any = global;
+globalAny.document = {
+  body: {
+    appendChild: jest.fn(),
+  },
+};
 
 class MockStylingHandler extends StylingHandler {
   constructor(document: Document, logger: Logger) {
@@ -13,11 +20,7 @@ class MockStylingHandler extends StylingHandler {
 }
 
 class MockModuleLoader extends ModuleLoader {
-  constructor(dependencies: IModuleLoaderDependencies) {
-    super(dependencies);
-  }
-  init = jest.fn();
-  importModule = jest.fn();
+  createModuleScript = jest.fn();
 }
 
 describe("EFRuntime", () => {
@@ -31,9 +34,17 @@ describe("EFRuntime", () => {
   let mockLocalStorageMock: Record<string, string>;
 
   beforeEach(() => {
+    jest.clearAllMocks();
+
     mockRegistry = {
       fetch: jest.fn(),
-      getURL: jest.fn(),
+      getURL: jest.fn().mockImplementation((componentName) => {
+        if (componentName === "some-component") {
+          return { js: "some-js", css: "some-css" };
+        } else if (componentName === "another-component") {
+          return { js: "another-js", css: "another-css" };
+        }
+      }),
       getComponentKeys: jest.fn().mockReturnValue([]),
       applyOverrides: jest.fn(),
       getRegistry: jest.fn().mockReturnValue({}),
@@ -41,21 +52,14 @@ describe("EFRuntime", () => {
 
     const mockDocument = {
       createElement: jest.fn(),
-      head: {
-        append: jest.fn(),
+      body: {
+        appendChild: jest.fn(),
       },
     } as unknown as Document;
 
     logger = new MockLogger() as unknown as Logger;
 
-    const moduleLoaderDependencies: IModuleLoaderDependencies = {
-      document: mockDocument,
-      loaderSrc: "someSrc",
-      registry: mockRegistry,
-      logger: logger,
-    };
-
-    mockModuleLoader = new MockModuleLoader(moduleLoaderDependencies);
+    mockModuleLoader = new MockModuleLoader();
     mockStylingHandler = new MockStylingHandler(mockDocument, logger);
 
     logger = new MockLogger() as unknown as Logger;
@@ -81,6 +85,7 @@ describe("EFRuntime", () => {
       componentRegistry: mockRegistry,
       moduleLoader: mockModuleLoader,
       stylingHandler: mockStylingHandler,
+      document: mockDocument,
       logger: logger,
       localStorage: mockLocalStorage,
     };
@@ -98,7 +103,6 @@ describe("EFRuntime", () => {
     it("initialises the module loader and fetches registry", async () => {
       await runtime.init({ systemCode: "some-system-code" });
 
-      expect(mockModuleLoader.init).toHaveBeenCalled();
       expect(mockRegistry.fetch).toHaveBeenCalledWith("some-system-code");
     });
 
@@ -115,14 +119,39 @@ describe("EFRuntime", () => {
     });
   });
 
+  describe("loadAll", () => {
+    describe("loadAll", () => {
+      it("loads all available components from the registry", async () => {
+        mockRegistry.getRegistry.mockReturnValue({
+          "some-component": { js: "some-js", css: "some-css" },
+          "another-component": { js: "another-js", css: "another-css" },
+        });
+
+        await runtime.init({ systemCode: "some-system-code" }); // Make sure init is called
+        await runtime.loadAll(); // This line may not be necessary now that init calls loadAll
+
+        expect(mockStylingHandler.addStyling).toHaveBeenCalledWith("some-css");
+        expect(mockStylingHandler.addStyling).toHaveBeenCalledWith(
+          "another-css"
+        );
+        expect(mockModuleLoader.createModuleScript).toHaveBeenCalledWith(
+          "some-js"
+        );
+        expect(mockModuleLoader.createModuleScript).toHaveBeenCalledWith(
+          "another-js"
+        );
+      });
+    });
+  });
+
   describe("load", () => {
-    it("logs an error if component is not found in registry", async () => {
+    it("logs an error if the component is not found in the registry", async () => {
       mockRegistry.getURL.mockReturnValue(undefined);
 
-      await runtime.load("some-component");
+      await runtime.load("missing-component");
 
       expect(logger.error).toHaveBeenCalledWith(
-        "Failed to retrieve URL for component some-component"
+        "Failed to retrieve URL for component missing-component"
       );
     });
 
@@ -161,14 +190,16 @@ describe("EFRuntime", () => {
         js: "some-js-url",
         css: "some-css-url",
       });
-      mockModuleLoader.importModule.mockResolvedValue({});
+      mockModuleLoader.createModuleScript.mockResolvedValue({});
 
       await runtime.load("some-component");
 
       expect(mockStylingHandler.addStyling).toHaveBeenCalledWith(
         "some-css-url"
       );
-      expect(mockModuleLoader.importModule).toHaveBeenCalledWith("some-js-url");
+      expect(mockModuleLoader.createModuleScript).toHaveBeenCalledWith(
+        "some-js-url"
+      );
     });
   });
 });

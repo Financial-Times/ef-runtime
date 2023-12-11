@@ -1,103 +1,41 @@
-import { IComponentRegistry } from "../ComponentRegistry";
-import { ModuleLoader, IModuleLoaderDependencies } from "./ModuleLoader";
-import { Logger } from "../Logger";
-import { MockLogger } from "../Logger/__mocks__";
+import { ModuleLoader } from "../ModuleLoader";
 
 describe("ModuleLoader", () => {
   let createElementMock: jest.Mock;
-  let appendMock: jest.Mock;
-  let logger: Logger;
+  let appendChildMock: jest.Mock;
   let moduleLoader: ModuleLoader;
-  let moduleLoaderDependencies: IModuleLoaderDependencies;
-  let mockRegistry: jest.Mocked<IComponentRegistry>;
 
   beforeEach(() => {
     createElementMock = jest.fn();
-    appendMock = jest.fn();
-    mockRegistry = {
-      fetch: jest.fn(),
-      getURL: jest.fn(),
-      getComponentKeys: jest.fn(),
-      applyOverrides: jest.fn(),
-      getRegistry: jest.fn(),
-    } as jest.Mocked<IComponentRegistry>;
+    appendChildMock = jest.fn();
 
+    // Mock the global document object
     global.document = {
       createElement: createElementMock,
-      head: { append: appendMock },
+      body: {
+        appendChild: appendChildMock,
+      },
     } as unknown as Document;
 
-    logger = new MockLogger() as unknown as Logger;
-
-    moduleLoaderDependencies = {
-      document: global.document,
-      loaderSrc:
-        "https://cdnjs.cloudflare.com/ajax/libs/systemjs/6.14.2/system.min.js",
-      registry: mockRegistry,
-      logger: logger,
-    };
-
-    moduleLoader = new ModuleLoader(moduleLoaderDependencies);
+    moduleLoader = new ModuleLoader();
   });
 
-  it("should initialize the module loader", async () => {
-    const script = {
-      addEventListener: jest.fn((event, callback) => {
-        if (event === "load") {
-          callback();
-        }
-      }),
-      src: "",
-    };
-    createElementMock.mockReturnValue(script);
+  it("should create a script element with proper attributes and content", () => {
+    const mockURL = "https://example.com/some-module.js";
+    createElementMock.mockReturnValue({});
 
-    await moduleLoader.init();
-    expect(appendMock).toHaveBeenCalledWith(script);
-    expect(script.addEventListener).toHaveBeenCalledTimes(2);
-    expect(logger.info).toHaveBeenCalledWith(
-      `Script loaded: ${moduleLoaderDependencies.loaderSrc}`
+    const scriptElement = moduleLoader.createModuleScript(mockURL);
+
+    expect(createElementMock).toHaveBeenCalledWith("script");
+    expect(scriptElement.type).toBe("module");
+    expect(scriptElement.innerHTML).toContain(
+      `import * as component from "${mockURL}";`
     );
-  });
-
-  it("should handle script loading error", async () => {
-    const errorEvent = {};
-    const script = {
-      addEventListener: jest.fn((event, callback) => {
-        if (event === "error") {
-          callback(errorEvent);
-        }
-      }),
-      src: "",
-    };
-    createElementMock.mockReturnValue(script);
-
-    await expect(moduleLoader.init()).rejects.toEqual(errorEvent);
-    expect(logger.error).toHaveBeenCalledWith(
-      `Failed to load script: ${moduleLoaderDependencies.loaderSrc}`,
-      errorEvent
+    expect(scriptElement.innerHTML).toContain(
+      "if (component.init) component.init();"
     );
-  });
-
-  it("should import module", async () => {
-    // Mock the global System object
-    // @ts-ignore
-    global.System = { import: jest.fn().mockReturnValue(Promise.resolve({})) };
-
-    await moduleLoader.importModule("url");
-    // @ts-ignore
-    expect(global.System.import).toHaveBeenCalledWith("url");
-  });
-
-  it("should log an error if module import fails", async () => {
-    const error = new Error("Import error");
-    // Mock the global System object
-    // @ts-ignore
-    global.System = { import: jest.fn().mockRejectedValue(error) };
-
-    await expect(moduleLoader.importModule("url")).rejects.toEqual(error);
-    expect(logger.error).toHaveBeenCalledWith(
-      "Failed to import module: url",
-      error
+    expect(scriptElement.innerHTML).toContain(
+      "if (component.mount) component.mount();"
     );
   });
 });

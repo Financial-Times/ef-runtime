@@ -1,12 +1,14 @@
 import { IComponentRegistry } from "../ComponentRegistry";
 import { ModuleLoader } from "../ModuleLoader";
 import { StylingHandler } from "../StylingHandler";
+import { EFComponentInfo } from "../types";
 import { Logger } from "../Logger";
 
 export interface IRuntimeDependencies {
   componentRegistry: IComponentRegistry;
   moduleLoader: ModuleLoader;
   stylingHandler: StylingHandler;
+  document: Document;
   logger: Logger;
   localStorage: Storage;
 }
@@ -15,6 +17,7 @@ export class EFRuntime {
   private registry: IComponentRegistry;
   private moduleLoader: ModuleLoader;
   private stylingHandler: StylingHandler;
+  private document: Document;
   private logger: Logger;
   private localStorage: Storage;
 
@@ -22,19 +25,21 @@ export class EFRuntime {
     componentRegistry,
     moduleLoader,
     stylingHandler,
+    document,
     logger,
     localStorage,
   }: IRuntimeDependencies) {
     this.registry = componentRegistry;
     this.moduleLoader = moduleLoader;
     this.stylingHandler = stylingHandler;
+    this.document = document;
     this.logger = logger;
     this.localStorage = localStorage;
   }
 
   private validateOptions(options: {
     systemCode?: string;
-    overrides?: { [propName: string]: { js: string; css: string } };
+    overrides?: { [propName: string]: EFComponentInfo };
   }): void {
     if (!options.systemCode) {
       this.logger.error("Must provide a systemCode option");
@@ -45,13 +50,11 @@ export class EFRuntime {
   async init(
     options: {
       systemCode?: string;
-      overrides?: { [propName: string]: { js: string; css: string } };
+      overrides?: { [propName: string]: EFComponentInfo };
     } = {}
   ): Promise<void> {
     this.validateOptions(options);
-
     await this.registry.fetch(options.systemCode as string);
-
     if (options.overrides) {
       this.registry.applyOverrides(options.overrides);
     }
@@ -61,17 +64,17 @@ export class EFRuntime {
       this.registry.applyOverrides(JSON.parse(localOverrides));
     }
 
-    await this.moduleLoader.init();
     this.loadAll();
   }
 
-  loadAll(): void {
-    const components = this.registry.getRegistry();
-    for (const component in components) {
+  async loadAll(): Promise<void> {
+    const components = Object.keys(this.registry.getRegistry());
+    const loadPromises = components.map((component) =>
       this.load(component).catch((error) =>
-        this.logger.error(`Error loading ${component}`, error)
-      );
-    }
+        console.error(`Error loading ${component}`, error)
+      )
+    );
+    await Promise.all(loadPromises);
   }
 
   async load(component: string): Promise<void> {
@@ -122,7 +125,7 @@ export class EFRuntime {
   private async loadComponent(js: string, css: string, component: string) {
     this.stylingHandler.addStyling(css);
     try {
-      const componentModule = await this.moduleLoader.importModule(js);
+      const componentModule = this.moduleLoader.createModuleScript(js);
       this.executeLifecycleMethods(componentModule);
     } catch (error) {
       this.logger.error(
