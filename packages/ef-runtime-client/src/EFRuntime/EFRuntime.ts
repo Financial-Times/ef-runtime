@@ -1,34 +1,49 @@
 import { IComponentRegistry } from "../ComponentRegistry";
 import { ModuleLoader } from "../ModuleLoader";
 import { StylingHandler } from "../StylingHandler";
+import { EFComponentInfo } from "../types";
+import { Logger } from "../Logger";
 import { logger } from "../utils/logger";
 
 export interface IRuntimeDependencies {
   componentRegistry: IComponentRegistry;
   moduleLoader: ModuleLoader;
   stylingHandler: StylingHandler;
+  document: Document;
+  logger: Logger;
+  localStorage: Storage;
 }
 
 export class EFRuntime {
   private registry: IComponentRegistry;
   private moduleLoader: ModuleLoader;
   private stylingHandler: StylingHandler;
+  private document: Document;
+  private logger: Logger;
+  private localStorage: Storage;
 
   constructor({
     componentRegistry,
     moduleLoader,
     stylingHandler,
+    document,
+    logger,
+    localStorage,
   }: IRuntimeDependencies) {
     this.registry = componentRegistry;
     this.moduleLoader = moduleLoader;
     this.stylingHandler = stylingHandler;
+    this.document = document;
+    this.logger = logger;
+    this.localStorage = localStorage;
   }
 
   private validateOptions(options: {
     systemCode?: string;
-    overrides?: { [propName: string]: { js: string; css: string } };
+    overrides?: { [propName: string]: EFComponentInfo };
   }): void {
     if (!options.systemCode) {
+      this.logger.error("Must provide a systemCode option");
       throw new Error("Must provide a systemCode option");
     }
   }
@@ -36,41 +51,37 @@ export class EFRuntime {
   async init(
     options: {
       systemCode?: string;
-      overrides?: { [propName: string]: { js: string; css: string } };
+      overrides?: { [propName: string]: EFComponentInfo };
     } = {}
   ): Promise<void> {
     this.validateOptions(options);
-
     await this.registry.fetch(options.systemCode as string);
-
     if (options.overrides) {
       this.registry.applyOverrides(options.overrides);
     }
-    const localOverrides = localStorage.getItem("ef-overrides");
+
+    const localOverrides = this.localStorage.getItem("ef-overrides");
     if (localOverrides) {
       this.registry.applyOverrides(JSON.parse(localOverrides));
     }
 
-    await this.moduleLoader.init();
     this.loadAll();
   }
 
   async loadAll(): Promise<void> {
-    const components = this.registry.getRegistry();
-    for (const component in components) {
+    const components = Object.keys(this.registry.getRegistry());
+    const loadPromises = components.map((component) =>
       this.load(component).catch((error) =>
-        logger.error(`Failed to initialise and mount ${component}`, error)
-      );
-    }
-    await Promise.allSettled(
-      Object.keys(components).map((component) => this.load(component))
+        this.logger.error(`Error loading ${component}`, error)
+      )
     );
+    await Promise.all(loadPromises);
   }
 
   async load(component: string): Promise<void> {
     const urlInfo = this.registry.getComponentInfo(component);
     if (!urlInfo) {
-      logger.error(`Failed to retrieve Info for component ${component}`);
+      this.logger.error(`Failed to retrieve Info for component ${component}`);
       return;
     }
 
@@ -99,7 +110,7 @@ export class EFRuntime {
     }
 
     if (!isValid) {
-      console.error(
+      this.logger.error(
         `Missing ${missingParts.join(" and ")} URL for component ${component}`
       );
     }
@@ -110,11 +121,11 @@ export class EFRuntime {
   private async loadComponent(js: string, css: string, component: string) {
     this.stylingHandler.addStyling(css);
     try {
-      const componentModule = await this.moduleLoader.importModule(js);
+      const componentModule = this.moduleLoader.createModuleScript(js);
       this.executeLifecycleMethods(componentModule);
     } catch (error) {
-      logger.error(
-        `Error when mounting component ${component} using SystemJS`,
+      this.logger.error(
+        `Failed to load component ${component} using SystemJS`,
         error
       );
     }

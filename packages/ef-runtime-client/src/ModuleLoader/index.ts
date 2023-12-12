@@ -1,1 +1,1 @@
-export { ModuleLoader, IModuleLoaderDependencies } from "./ModuleLoader";
+export { ModuleLoader } from "./ModuleLoader";

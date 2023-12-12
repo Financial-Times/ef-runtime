@@ -1,58 +1,41 @@
-import { ComponentRegistry } from "../ComponentRegistry";
-import { ModuleLoader, IModuleLoaderDependencies } from "./ModuleLoader";
+import { ModuleLoader } from "../ModuleLoader";
 
 describe("ModuleLoader", () => {
   let createElementMock: jest.Mock;
-  let appendMock: jest.Mock;
+  let appendChildMock: jest.Mock;
   let moduleLoader: ModuleLoader;
-  let moduleLoaderDependencies: IModuleLoaderDependencies;
 
   beforeEach(() => {
     createElementMock = jest.fn();
-    appendMock = jest.fn();
+    appendChildMock = jest.fn();
 
-    global.document = Object.assign(global.document || {}, {
+    // Mock the global document object
+    global.document = {
       createElement: createElementMock,
-      head: { append: appendMock },
-    }) as unknown as Document;
+      body: {
+        appendChild: appendChildMock,
+      },
+    } as unknown as Document;
 
-    const registryDependencies = {
-    registryURL: "https://ef-component-registry-51742754f2eb.herokuapp.com",
-    };
-    const registry = new ComponentRegistry(registryDependencies);
-
-    moduleLoaderDependencies = {
-      document: global.document,
-      loaderSrc:
-        "https://cdnjs.cloudflare.com/ajax/libs/systemjs/6.14.2/system.min.js",
-      registry
-    };
-
-    moduleLoader = new ModuleLoader(moduleLoaderDependencies);
+    moduleLoader = new ModuleLoader();
   });
 
-  it("should initialize the module loader", async () => {
-    const script = {
-      addEventListener: jest.fn((event, callback) => {
-        if (event === "load") {
-          callback();
-        }
-      }),
-    };
-    createElementMock.mockReturnValue(script);
+  it("should create a script element with proper attributes and content", () => {
+    const mockURL = "https://example.com/some-module.js";
+    createElementMock.mockReturnValue({});
 
-    await moduleLoader.init();
-    expect(appendMock).toHaveBeenCalledWith(script);
-    expect(script.addEventListener).toHaveBeenCalledTimes(2);
-  });
+    const scriptElement = moduleLoader.createModuleScript(mockURL);
 
-  it("should import module", async () => {
-    // Mock the global System object
-    // @ts-ignore
-    global.System = { import: jest.fn().mockReturnValue(Promise.resolve({})) };
-
-    await moduleLoader.importModule("url");
-    // @ts-ignore
-    expect(global.System.import).toHaveBeenCalledWith("url");
+    expect(createElementMock).toHaveBeenCalledWith("script");
+    expect(scriptElement.type).toBe("module");
+    expect(scriptElement.innerHTML).toContain(
+      `import * as component from "${mockURL}";`
+    );
+    expect(scriptElement.innerHTML).toContain(
+      "if (component.init) component.init();"
+    );
+    expect(scriptElement.innerHTML).toContain(
+      "if (component.mount) component.mount();"
+    );
   });
 });
