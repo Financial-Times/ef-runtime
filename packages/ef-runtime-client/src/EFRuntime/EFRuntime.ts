@@ -3,7 +3,6 @@ import { ModuleLoader } from "../ModuleLoader";
 import { StylingHandler } from "../StylingHandler";
 import { EFComponentInfo } from "../types";
 import { Logger } from "../Logger";
-import { logger } from "../utils/logger";
 
 export interface IRuntimeDependencies {
   componentRegistry: IComponentRegistry;
