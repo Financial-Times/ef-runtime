@@ -3,6 +3,7 @@ import { ModuleLoader } from "../ModuleLoader";
 import { StylingHandler } from "../StylingHandler";
 import { EFComponentInfo } from "../types";
 import { Logger } from "../Logger";
+import { logger } from "../utils/logger";
 
 export interface IRuntimeDependencies {
   componentRegistry: IComponentRegistry;
@@ -71,28 +72,23 @@ export class EFRuntime {
     const components = Object.keys(this.registry.getRegistry());
     const loadPromises = components.map((component) =>
       this.load(component).catch((error) =>
-        console.error(`Error loading ${component}`, error)
+        this.logger.error(`Error loading ${component}`, error)
       )
     );
     await Promise.all(loadPromises);
   }
 
   async load(component: string): Promise<void> {
-    const urlInfo = this.getComponentURL(component);
-    if (!urlInfo) return;
+    const urlInfo = this.registry.getComponentInfo(component);
+    if (!urlInfo) {
+      this.logger.error(`Failed to retrieve Info for component ${component}`);
+      return;
+    }
 
     const { js, css } = urlInfo;
     if (!this.isValidURL(js, css, component)) return;
 
     await this.loadComponent(js, css, component);
-  }
-
-  private getComponentURL(component: string) {
-    const urlInfo = this.registry.getURL(component);
-    if (!urlInfo) {
-      this.logger.error(`Failed to retrieve URL for component ${component}`);
-    }
-    return urlInfo;
   }
 
   private isValidURL(

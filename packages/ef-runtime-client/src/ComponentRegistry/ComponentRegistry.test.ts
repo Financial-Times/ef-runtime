@@ -6,7 +6,7 @@ describe("ComponentRegistry", () => {
   let registry: ComponentRegistry;
   let logger: Logger;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     logger = new MockLogger() as unknown as Logger;
 
     registry = new ComponentRegistry({
@@ -28,7 +28,7 @@ describe("ComponentRegistry", () => {
     );
 
     await registry.fetch("systemCode");
-    expect(registry.getURL("ef-demo-component")).toEqual({
+    expect(registry.getComponentInfo("ef-demo-component")).toEqual({
       js: "js-url",
       css: "css-url",
     });
@@ -48,23 +48,43 @@ describe("ComponentRegistry", () => {
   });
 
   it("should get undefined for non-existent component", () => {
-    expect(registry.getURL("non-existent")).toBeUndefined();
+    expect(registry.getComponentInfo("non-existent")).toBeUndefined();
   });
 
-  it("should apply overrides", () => {
+  it("should apply overrides", async () => {
+    global.fetch = jest.fn().mockImplementation(() =>
+      Promise.resolve({
+        json: () =>
+          Promise.resolve({
+            imports: {},
+          }),
+      })
+    );
+
+    await registry.fetch("systemCode");
     registry.applyOverrides({
       "ef-demo-component": {
         js: "override-js-url",
         css: "override-css-url",
       },
     });
-    expect(registry.getURL("ef-demo-component")).toEqual({
+    expect(registry.getComponentInfo("ef-demo-component")).toEqual({
       js: "override-js-url",
       css: "override-css-url",
     });
   });
 
-  it("should return component keys", () => {
+  it("should return component keys", async () => {
+    global.fetch = jest.fn().mockImplementation(() =>
+      Promise.resolve({
+        json: () =>
+          Promise.resolve({
+            imports: {},
+          }),
+      })
+    );
+
+    await registry.fetch("systemCode");
     registry.applyOverrides({
       "ef-demo-component": {
         js: "override-js-url",

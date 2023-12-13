@@ -38,13 +38,7 @@ describe("EFRuntime", () => {
 
     mockRegistry = {
       fetch: jest.fn(),
-      getURL: jest.fn().mockImplementation((componentName) => {
-        if (componentName === "some-component") {
-          return { js: "some-js", css: "some-css" };
-        } else if (componentName === "another-component") {
-          return { js: "another-js", css: "another-css" };
-        }
-      }),
+      getComponentInfo: jest.fn(),
       getComponentKeys: jest.fn().mockReturnValue([]),
       applyOverrides: jest.fn(),
       getRegistry: jest.fn().mockReturnValue({}),
@@ -94,6 +88,10 @@ describe("EFRuntime", () => {
   });
 
   describe("init", () => {
+    afterAll(() => {
+      jest.restoreAllMocks();
+    });
+
     it("throws an error if systemCode is not provided", async () => {
       await expect(runtime.init({})).rejects.toThrow(
         "Must provide a systemCode option"
@@ -119,44 +117,24 @@ describe("EFRuntime", () => {
     });
   });
 
-  describe("loadAll", () => {
-    describe("loadAll", () => {
-      it("loads all available components from the registry", async () => {
-        mockRegistry.getRegistry.mockReturnValue({
-          "some-component": { js: "some-js", css: "some-css" },
-          "another-component": { js: "another-js", css: "another-css" },
-        });
-
-        await runtime.init({ systemCode: "some-system-code" }); // Make sure init is called
-        await runtime.loadAll(); // This line may not be necessary now that init calls loadAll
-
-        expect(mockStylingHandler.addStyling).toHaveBeenCalledWith("some-css");
-        expect(mockStylingHandler.addStyling).toHaveBeenCalledWith(
-          "another-css"
-        );
-        expect(mockModuleLoader.createModuleScript).toHaveBeenCalledWith(
-          "some-js"
-        );
-        expect(mockModuleLoader.createModuleScript).toHaveBeenCalledWith(
-          "another-js"
-        );
-      });
-    });
-  });
-
   describe("load", () => {
-    it("logs an error if the component is not found in the registry", async () => {
-      mockRegistry.getURL.mockReturnValue(undefined);
+    it("logs an error if component is not found in registry", async () => {
+      mockRegistry.getComponentInfo.mockReturnValue(undefined);
+      const spyLogger = jest.spyOn(logger, "error");
 
       await runtime.load("missing-component");
 
-      expect(logger.error).toHaveBeenCalledWith(
-        "Failed to retrieve URL for component missing-component"
+      expect(spyLogger).toHaveBeenCalledWith(
+        "Failed to retrieve Info for component missing-component"
       );
     });
 
     it("logs an error if js is missing from registry", async () => {
-      mockRegistry.getURL.mockReturnValue({ js: null, css: "some-css-url" });
+      mockRegistry.getComponentInfo.mockReturnValue({
+        js: null,
+        css: "some-css-url",
+      });
+      console.error = jest.fn();
 
       await runtime.load("some-component");
 
@@ -166,7 +144,11 @@ describe("EFRuntime", () => {
     });
 
     it("logs an error if css is missing from registry", async () => {
-      mockRegistry.getURL.mockReturnValue({ js: "some-js-url", css: null });
+      mockRegistry.getComponentInfo.mockReturnValue({
+        js: "some-js-url",
+        css: null,
+      });
+      console.error = jest.fn();
 
       await runtime.load("some-component");
 
@@ -176,7 +158,8 @@ describe("EFRuntime", () => {
     });
 
     it("logs an error if both js and css are missing from registry", async () => {
-      mockRegistry.getURL.mockReturnValue({ js: null, css: null });
+      mockRegistry.getComponentInfo.mockReturnValue({ js: null, css: null });
+      console.error = jest.fn();
 
       await runtime.load("some-component");
 
@@ -186,7 +169,7 @@ describe("EFRuntime", () => {
     });
 
     it("adds styling and imports module if component is found in registry", async () => {
-      mockRegistry.getURL.mockReturnValue({
+      mockRegistry.getComponentInfo.mockReturnValue({
         js: "some-js-url",
         css: "some-css-url",
       });

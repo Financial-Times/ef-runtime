@@ -58,6 +58,10 @@ export async function init(options: {
 
   const runtime = new EFRuntime(runtimeDependencies);
 
-  await runtime.init(options);
+  try {
+    await runtime.init(options);
+  } catch {
+    logger.error(`Failed to initialise runtime`);
+  }
   if (location.hostname.match("local")) UI.init(registry);
 }

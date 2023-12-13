@@ -12,10 +12,10 @@ export class Logger {
   private debugLog: (message: string, ...args: any[]) => void;
 
   constructor(loggingOptions?: ILoggingOptions) {
-    this.infoLog = loggingOptions?.info || (() => {});
-    this.warnLog = loggingOptions?.warn || (() => {});
+    this.infoLog = loggingOptions?.info || console.info;
+    this.warnLog = loggingOptions?.warn || console.warn;
     this.errorLog = loggingOptions?.error || console.error;
-    this.debugLog = loggingOptions?.debug || (() => {});
+    this.debugLog = loggingOptions?.debug || console.debug;
   }
 
   info(message: string, ...args: any[]) {
