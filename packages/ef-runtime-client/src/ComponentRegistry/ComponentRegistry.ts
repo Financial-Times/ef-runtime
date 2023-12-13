@@ -1,4 +1,3 @@
-import { logger } from "../utils/logger";
 import { EFComponentInfo } from "../types";
 import { Logger } from "../Logger";
 
@@ -40,7 +39,7 @@ export class ComponentRegistry implements IComponentRegistry {
 
   getComponentInfo(component: string): EFComponentInfo | undefined {
     if (!this.initialised) {
-      logger.warn(
+      this.logger.warn(
         "Unable to get component URL. Component Registry was not initialised yet"
       );
       return;
@@ -50,7 +49,7 @@ export class ComponentRegistry implements IComponentRegistry {
 
   getComponentKeys(): string[] {
     if (!this.initialised) {
-      logger.warn(
+      this.logger.warn(
         "Unable to get component keys. Component Registry was not initialised yet"
       );
       return;
@@ -60,7 +59,7 @@ export class ComponentRegistry implements IComponentRegistry {
 
   getRegistry(): { [key: string]: EFComponentInfo } {
     if (!this.initialised) {
-      logger.warn(
+      this.logger.warn(
         "Unable to get Registry. Component Registry was not initialised yet"
       );
       return {};
