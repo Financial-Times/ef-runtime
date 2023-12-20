@@ -120,18 +120,11 @@ export class EFRuntime {
   private async loadComponent(js: string, css: string, component: string) {
     this.stylingHandler.addStyling(css);
     try {
-      const componentModule = this.moduleLoader.createModuleScript(js);
-      this.executeLifecycleMethods(componentModule);
+      const componentScript = this.moduleLoader.createModuleScript(js);
+      document.body.append(componentScript);
+      this.logger.info(`${component} js module was loaded successfully`);
     } catch (error) {
-      this.logger.error(
-        `Failed to load component ${component} using SystemJS`,
-        error
-      );
+      this.logger.error(`Failed to load component ${component} `, error);
     }
-  }
-
-  private async executeLifecycleMethods(componentModule: any): Promise<void> {
-    if (componentModule?.init) await componentModule.init();
-    if (componentModule?.mount) await componentModule.mount();
   }
 }
