@@ -39,7 +39,7 @@ export async function init(options: {
   const logger = new Logger(options.logging);
 
   const registry = new ComponentRegistry({
-    registryURL: "https://ef-component-registry-51742754f2eb.herokuapp.com",
+    registryURL: "https://ef-component-registry.in.ft.com/",
     logger: logger,
   });
 
