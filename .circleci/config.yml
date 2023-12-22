@@ -41,7 +41,7 @@ jobs:
           name: Publish to NPM
           command: |
             npm set //registry.npmjs.org/:_authToken=$NPM_TOKEN
-            npm publish --workspaces --access=public
+            npm publish --workspaces --access=public --allow-same-version
   test_ef_runtime_client:
     <<: *defaults
     steps:
