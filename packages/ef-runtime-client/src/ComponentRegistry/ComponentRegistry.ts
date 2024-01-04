@@ -28,7 +28,9 @@ export class ComponentRegistry implements IComponentRegistry {
 
   async fetch(systemCode: string): Promise<void> {
     try {
-      const res = await fetch(`${this.registryURL}/?app=${systemCode}`);
+      const res = await fetch(`${this.registryURL}/?app=${systemCode}`, {
+        credentials: "include",
+      });
       const data = await res.json();
       Object.assign(this.registry, data.imports);
       this.initialised = true;
