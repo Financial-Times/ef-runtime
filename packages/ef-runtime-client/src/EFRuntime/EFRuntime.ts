@@ -55,6 +55,9 @@ export class EFRuntime {
   ): Promise<void> {
     this.validateOptions(options);
     await this.registry.fetch(options.systemCode as string);
+
+    this.addImportMap();
+
     if (options.overrides) {
       this.registry.applyOverrides(options.overrides);
     }
@@ -65,6 +68,21 @@ export class EFRuntime {
     }
 
     this.loadAll();
+  }
+
+  addImportMap() {
+    const imports = {
+      "react": "https://esm.sh/react@18.2.0",
+      "react-dom/client": "https://esm.sh/react-dom@18.2.0/client"
+    };
+
+    let importmapScript = document.createElement('script');
+    importmapScript.type = "importmap";
+    importmapScript.innerHTML = JSON.stringify({
+      imports
+    });
+
+    document.head.appendChild(importmapScript);
   }
 
   async loadAll(): Promise<void> {
