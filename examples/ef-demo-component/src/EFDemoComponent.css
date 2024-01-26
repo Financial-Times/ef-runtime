@@ -1,0 +1,29 @@
+.demo-component {
+  display: flex;
+  animation: demo-component__popup-anim 2s infinite ease-in-out;
+}
+
+.demo-component__hand {
+  margin-left: 1rem;
+  animation: demo-component__hand-anim 0.5s infinite ease-in-out;
+}
+
+@keyframes demo-component__popup-anim {
+  0%,
+  100% {
+    transform: scale(0.8);
+  }
+  50% {
+    transform: scale(1);
+  }
+}
+
+@keyframes demo-component__hand-anim {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  50% {
+    transform: rotate(30deg);
+  }
+}
