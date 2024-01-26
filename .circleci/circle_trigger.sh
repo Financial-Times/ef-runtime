@@ -62,7 +62,7 @@ fi
 ############################################
 PACKAGES=$(ls ${PACKAGES_ROOT} -l | grep ^d | awk '{print $9}')
 EXAMPLES=$(ls ${EXAMPLES_ROOT} -l | grep ^d | awk '{print $9}')
-APPS="$PACKAGES\n$EXAMPLES"
+APPS=(${PACKAGES[@]} ${EXAMPLES[@]})
 echo "Searching for changes since commit [${LAST_COMPLETED_BUILD_SHA:0:7}] ..."
 
 ## The CircleCI API parameters object
