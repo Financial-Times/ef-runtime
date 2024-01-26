@@ -1,15 +1,10 @@
 # CircleCI configuration file
 version: 2.1
 
-defaults: &defaults
-  working_directory: ~/repo
-  docker:
-    - image: cimg/node:18.16
-
-all_branches_filter: &all_branches_filter
+main_branch_filter: &main_branch_filter
   filters:
-    tags:
-      only: /^v[0-9]+\.[0-9]+\.[0-9]+/
+    branches:
+      only: main
 
 publish_with_tags_filter: &publish_with_tags_filter
   filters:
@@ -18,13 +13,102 @@ publish_with_tags_filter: &publish_with_tags_filter
     tags:
       only: /^v[0-9]+\.[0-9]+\.[0-9]+/
 
+parameters:
+  # used to trigger the workflow
+  trigger:
+    type: boolean
+    default: true
+
+  # parameter per package
+  ef-runtime-client:
+    type: boolean
+    default: false
+
+  ef-demo-component:
+    type: boolean
+    default: false
+
+executors:
+  node:
+    docker:
+      - image: cimg/node:18.16
+
 jobs:
-  publish:
-    <<: *defaults
+  trigger-workflows:
+    executor: node
+    steps:
+      - checkout
+      - run:
+          name: Trigger workflows
+          command: chmod +x .circleci/circle_trigger.sh && .circleci/circle_trigger.sh
+
+  build_test_package:
+    parameters:
+      package_name:
+        type: string
+
+    executor: node
+    working_directory: ~/project/packages/<< parameters.package_name >>
+
+    steps:
+      - checkout:
+          path: ~/project
+      - run:
+          name: Install
+          command: |
+            npm install
+      - run:
+          name: Test
+          command: |
+            npm test
+      - run:
+          name: Build
+          command: |
+            npm run build
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - packages/<< parameters.package_name >>
+
+  build_test_example:
+    parameters:
+      example_name:
+        type: string
+
+    executor: node
+    working_directory: ~/project/examples/<< parameters.example_name >>
+
+    steps:
+      - checkout:
+          path: ~/project
+      - run:
+          name: Install
+          command: |
+            npm install
+      - run:
+          name: Test
+          command: |
+            npm test
+      - run:
+          name: Build
+          command: |
+            npm run build
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - examples/<< parameters.example_name >>
+
+  publish_package:
+    parameters:
+      package_name:
+        type: string
+
+    executor: node
+
     steps:
       - checkout
       - attach_workspace:
-          at: ~/repo
+          at: ~/project
       - run:
           name: Install
           command: |
@@ -42,26 +126,50 @@ jobs:
           command: |
             npm set //registry.npmjs.org/:_authToken=$NPM_TOKEN
             npm publish --workspaces --access=public --allow-same-version
-  test_ef_runtime_client:
-    <<: *defaults
+
+  deploy_example:
+    parameters:
+      example_name:
+        type: string
+
+    executor: node
+
     steps:
-      - checkout
       - run:
-          name: Install
+          name: Git push to a heroku app
           command: |
-            cd packages/ef-runtime-client
-            npm install
-      - run:
-          name: Run Tests
-          command: |
-            cd packages/ef-runtime-client
-            npm test
+            REMOTE=git.heroku.com/<< parameters.example_name >>.git
+            git push --prefix examples/<< parameters.example_name >> https://heroku:$HEROKU_API_KEY@$REMOTE main
 
 workflows:
-  build_and_publish:
+  # The main workflow responsible for triggering all other workflows
+  # in which changes are detected.
+  ci:
+    when: << pipeline.parameters.trigger >>
     jobs:
-      - test_ef_runtime_client
-      - publish:
+      - trigger-workflows
+
+  ef-runtime-client:
+    when: << pipeline.parameters.ef-runtime-client >>
+    jobs:
+      - build_test_package:
+          package_name: ef-runtime-client
+      - publish_package:
           <<: *publish_with_tags_filter
+          package_name: ef-runtime-client
           context:
             - npm-publish-token
+          requires:
+            - build_test_package
+
+
+  ef-demo-component:
+    when: << pipeline.parameters.ef-demo-component >>
+    jobs:
+      - build_test_example:
+          example_name: ef-demo-component
+      - deploy_example:
+          <<: *main_branch_filter
+          example_name: ef-demo-component
+          requires:
+            - build_test_example
