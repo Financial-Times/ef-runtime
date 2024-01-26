@@ -82,7 +82,7 @@ echo "Workflows currently in failed status: (${FAILED_WORKFLOWS[@]})."
 
 for APP in ${APPS[@]}
 do
-  if [ -d "$PACKAGES_ROOT/$APP"]; then
+  if [ -d "$PACKAGES_ROOT/$APP" ]; then
       APP_PATH=${PACKAGES_ROOT#.}/$APP
   else
       APP_PATH=${EXAMPLES_ROOT#.}/$APP
