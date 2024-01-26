@@ -147,7 +147,9 @@ workflows:
   ci:
     when: << pipeline.parameters.trigger >>
     jobs:
-      - trigger-workflows
+      - trigger-workflows:
+          context:
+            - circleci-orb-publishing
 
   ef-runtime-client:
     when: << pipeline.parameters.ef-runtime-client >>
