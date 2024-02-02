@@ -149,7 +149,7 @@ workflows:
     jobs:
       - trigger-workflows:
           context:
-            - circleci-orb-publishing
+            - extensible-frontends
 
   ef-runtime-client:
     when: << pipeline.parameters.ef-runtime-client >>
