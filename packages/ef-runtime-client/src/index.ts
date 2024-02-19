@@ -63,5 +63,8 @@ export async function init(options: {
   } catch {
     logger.error(`Failed to initialise runtime`);
   }
-  if (location.hostname.match("local")) UI.init(registry);
+
+  // Initialize UI only if on localhost and when efui localStorage key is set to true
+  if (location.hostname.match("local") && localStorage.getItem("efui") === "true")
+    UI.init(registry);
 }
