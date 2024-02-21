@@ -135,11 +135,14 @@ jobs:
     executor: node
 
     steps:
+      - checkout
+      - attach_workspace:
+          at: ~/project
       - run:
           name: Git push to a heroku app
           command: |
             REMOTE=git.heroku.com/<< parameters.example_name >>.git
-            git push https://heroku:$HEROKU_API_KEY@$REMOTE main
+            git push https://heroku:$HEROKU_API_KEY@$REMOTE `git subtree split --prefix examples/<< parameters.example_name >> main`:main --force
 
 workflows:
   # The main workflow responsible for triggering all other workflows
@@ -173,5 +176,7 @@ workflows:
       - deploy_example:
           <<: *main_branch_filter
           example_name: ef-demo-component
+          context:
+            - rel-eng-basic-creds
           requires:
             - build_test_example
