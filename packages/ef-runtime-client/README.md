@@ -58,6 +58,20 @@ EFRuntime.init({
 });
 ```
 
+### Using the Extensible Frontends Overrides UI
+
+Instead of modifing the init function in the page's code, you can use the Extensible-Frontends override UI to test your component locally. To do so, You can add the key `efui` to your browser's localStorage manually and set its value to "true" or by running the following command in your browser's console:
+
+``` js
+localStorage.setItem("efui", "true")
+```
+
+If the `EFUI` button is showing in the page you are developing and you would like to disable it, simple remove the key from your browser's localStorage manually or by running the following command in your browser's console:
+
+``` js
+localStorage.removeItem("efui")
+```
+
 ### Custom Logging
 
 The runtime allows you to implement custom logging. You can utilize this feature to integrate your own logging system or to assist in debugging. Pass a logging object during initialisation with custom functions for `info`, `warn`, `error`, and `debug`.

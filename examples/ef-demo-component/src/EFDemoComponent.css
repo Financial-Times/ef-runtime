@@ -1,14 +1,14 @@
-.demo-component {
+.ef-demo-component {
   display: flex;
-  animation: demo-component__popup-anim 2s infinite ease-in-out;
+  animation: ef-demo-component__popup-anim 2s infinite ease-in-out;
 }
 
-.demo-component__hand {
+.ef-demo-component__hand {
   margin-left: 1rem;
-  animation: demo-component__hand-anim 0.5s infinite ease-in-out;
+  animation: ef-demo-component__hand-anim 0.5s infinite ease-in-out;
 }
 
-@keyframes demo-component__popup-anim {
+@keyframes ef-demo-component__popup-anim {
   0%,
   100% {
     transform: scale(0.8);
@@ -18,7 +18,7 @@
   }
 }
 
-@keyframes demo-component__hand-anim {
+@keyframes ef-demo-component__hand-anim {
   0%,
   100% {
     transform: rotate(0);
