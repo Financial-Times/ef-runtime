@@ -76,7 +76,7 @@ export class EFRuntime {
       "ef-react-dom/client": "https://esm.sh/react-dom@18.2.0/client"
     };
 
-    const pageImportMapScript = document.querySelector("script[type='importmap']");
+    const pageImportMapScript = this.document.querySelector("script[type='importmap']");
 
     if (pageImportMapScript) {
       let pageImportMap = JSON.parse(pageImportMapScript.innerHTML);
@@ -87,10 +87,10 @@ export class EFRuntime {
       }
       pageImportMapScript.innerHTML = JSON.stringify(pageImportMap);
     } else {
-      let importmapScript = document.createElement('script');
+      let importmapScript: HTMLScriptElement = this.document.createElement('script');
       importmapScript.type = "importmap";
       importmapScript.innerHTML = JSON.stringify({ imports });
-      document.head.appendChild(importmapScript);
+      this.document.head.appendChild(importmapScript);
     }
   }
 

@@ -45,10 +45,14 @@ describe("EFRuntime", () => {
     } as jest.Mocked<IComponentRegistry>;
 
     const mockDocument = {
-      createElement: jest.fn(),
+      createElement: jest.fn().mockReturnValue({ type: "", innerHTML: "" }),
+      head: {
+        appendChild: jest.fn(),
+      },
       body: {
         appendChild: jest.fn(),
       },
+      querySelector: jest.fn()
     } as unknown as Document;
 
     logger = new MockLogger() as unknown as Logger;
