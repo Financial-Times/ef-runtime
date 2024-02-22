@@ -72,17 +72,26 @@ export class EFRuntime {
 
   addImportMap() {
     const imports = {
-      "react": "https://esm.sh/react@18.2.0",
-      "react-dom/client": "https://esm.sh/react-dom@18.2.0/client"
+      "ef-react": "https://esm.sh/react@18.2.0",
+      "ef-react-dom/client": "https://esm.sh/react-dom@18.2.0/client"
     };
 
-    let importmapScript = document.createElement('script');
-    importmapScript.type = "importmap";
-    importmapScript.innerHTML = JSON.stringify({
-      imports
-    });
+    const pageImportMapScript = document.querySelector("script[type='importmap']");
 
-    document.head.appendChild(importmapScript);
+    if (pageImportMapScript) {
+      let pageImportMap = JSON.parse(pageImportMapScript.innerHTML);
+      if (pageImportMap.hasOwnProperty("imports")) {
+        Object.assign(pageImportMap.imports, imports);
+      } else {
+        Object.assign(pageImportMap, { imports });
+      }
+      pageImportMapScript.innerHTML = JSON.stringify(pageImportMap);
+    } else {
+      let importmapScript = document.createElement('script');
+      importmapScript.type = "importmap";
+      importmapScript.innerHTML = JSON.stringify({ imports });
+      document.head.appendChild(importmapScript);
+    }
   }
 
   async loadAll(): Promise<void> {
