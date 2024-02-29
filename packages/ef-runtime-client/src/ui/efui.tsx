@@ -23,7 +23,7 @@ export default class EFUI extends Component<EFUIProps, EFUIState> {
       showComponents: false,
       needsRefresh: false,
       components: {
-        ...this.componentRegistry.getRegistry(),
+        ...this.componentRegistry.getRegistry().components,
       },
     };
   }
@@ -40,7 +40,7 @@ export default class EFUI extends Component<EFUIProps, EFUIState> {
       ...this.state,
       needsRefresh: true,
       components: {
-        ...this.componentRegistry.getRegistry(),
+        ...this.componentRegistry.getRegistry().components,
       },
     });
     localStorage.setItem("ef-overrides", JSON.stringify(this.localOverrides));

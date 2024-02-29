@@ -55,6 +55,10 @@ export class EFRuntime {
   ): Promise<void> {
     this.validateOptions(options);
     await this.registry.fetch(options.systemCode as string);
+
+    const dependencies = this.registry.getRegistry().dependencies;
+    if (dependencies && Object.keys(dependencies).length > 0) this.addImportMap(dependencies);
+
     if (options.overrides) {
       this.registry.applyOverrides(options.overrides);
     }
@@ -64,30 +68,42 @@ export class EFRuntime {
       this.registry.applyOverrides(JSON.parse(localOverrides));
     }
 
-    this.loadAll();
+    const components: { [key: string]: EFComponentInfo } = this.registry.getRegistry().components;
+    if (components && Object.keys(components).length > 0) this.loadAll(components);
   }
 
-  async loadAll(): Promise<void> {
-    const components = Object.keys(this.registry.getRegistry());
-    const loadPromises = components.map((component) =>
-      this.load(component).catch((error) =>
-        this.logger.error(`Error loading ${component}`, error)
-      )
-    );
-    await Promise.all(loadPromises);
-  }
+  addImportMap(dependencies: { [key: string]: string }) {
 
-  async load(component: string): Promise<void> {
-    const urlInfo = this.registry.getComponentInfo(component);
-    if (!urlInfo) {
-      this.logger.error(`Failed to retrieve Info for component ${component}`);
-      return;
+    const pageImportMapScript = this.document.querySelector("script[type='importmap']");
+
+    if (pageImportMapScript) {
+      let pageImportMap = JSON.parse(pageImportMapScript.innerHTML);
+      if (pageImportMap.hasOwnProperty("imports")) {
+        Object.assign(pageImportMap.imports, dependencies);
+      } else {
+        Object.assign(pageImportMap, { imports: dependencies });
+      }
+      pageImportMapScript.innerHTML = JSON.stringify(pageImportMap);
+    } else {
+      let importmapScript: HTMLScriptElement = this.document.createElement('script');
+      importmapScript.type = "importmap";
+      importmapScript.innerHTML = JSON.stringify({ imports: dependencies });
+      this.document.head.appendChild(importmapScript);
     }
+  }
 
-    const { js, css } = urlInfo;
-    if (!this.isValidURL(js, css, component)) return;
+  async loadAll(components: { [key: string]: EFComponentInfo }): Promise<void> {
+    const loadPromises = Object.entries(components)
+      .map(([component, info]) => {
+        const { js, css } = info;
+        if (!this.isValidURL(js, css, component)) return;
 
-    await this.loadComponent(js, css, component);
+        this.loadComponent(js, css, component).catch((error) =>
+          this.logger.error(`Error loading ${component}`, error)
+        )
+      }
+      );
+    await Promise.all(loadPromises);
   }
 
   private isValidURL(

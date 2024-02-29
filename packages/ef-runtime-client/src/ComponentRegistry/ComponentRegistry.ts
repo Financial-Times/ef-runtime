@@ -1,4 +1,4 @@
-import { EFComponentInfo } from "../types";
+import { EFComponentInfo, EFRegistryInfo } from "../types";
 import { Logger } from "../Logger";
 
 export interface IComponentRegistry {
@@ -6,7 +6,7 @@ export interface IComponentRegistry {
   getComponentInfo(component: string): EFComponentInfo | undefined;
   getComponentKeys(): string[];
   applyOverrides(overrides: { [propName: string]: EFComponentInfo }): void;
-  getRegistry(): { [key: string]: EFComponentInfo };
+  getRegistry(): EFRegistryInfo;
 }
 
 export interface IComponentRegistryDependencies {
@@ -15,7 +15,7 @@ export interface IComponentRegistryDependencies {
 }
 
 export class ComponentRegistry implements IComponentRegistry {
-  private registry: { [propName: string]: EFComponentInfo } = {};
+  private registry: EFRegistryInfo = { components: {}, dependencies: {} };
   private initialised: boolean;
   private registryURL: string;
   private logger: Logger;
@@ -32,7 +32,8 @@ export class ComponentRegistry implements IComponentRegistry {
         credentials: "include",
       });
       const data = await res.json();
-      Object.assign(this.registry, data.imports);
+      Object.assign(this.registry.components, data.components);
+      Object.assign(this.registry.dependencies, data.dependencies);
       this.initialised = true;
     } catch (err) {
       this.logger.error("Unable to fetch Component Registry", err);
@@ -46,7 +47,7 @@ export class ComponentRegistry implements IComponentRegistry {
       );
       return;
     }
-    return this.registry[component];
+    return this.registry.components[component];
   }
 
   getComponentKeys(): string[] {
@@ -56,26 +57,26 @@ export class ComponentRegistry implements IComponentRegistry {
       );
       return;
     }
-    return Object.keys(this.registry);
+    return Object.keys(this.registry.components);
   }
 
-  getRegistry(): { [key: string]: EFComponentInfo } {
+  getRegistry(): EFRegistryInfo {
     if (!this.initialised) {
       this.logger.warn(
         "Unable to get Registry. Component Registry was not initialised yet"
       );
-      return {};
+      return { components: {}, dependencies: {} };
     }
-    return { ...this.registry };
+    return this.registry;
   }
 
   applyOverrides(overrides: { [propName: string]: EFComponentInfo }): void {
     for (const [key, { js, css }] of Object.entries(overrides)) {
-      if (this.registry[key]) {
-        if (js) this.registry[key].js = js;
-        if (css) this.registry[key].css = css;
+      if (this.registry.components[key]) {
+        if (js) this.registry.components[key].js = js;
+        if (css) this.registry.components[key].css = css;
       } else {
-        this.registry[key] = { js: js || "", css: css || "" };
+        this.registry.components[key] = { js: js || "", css: css || "" };
       }
     }
   }
