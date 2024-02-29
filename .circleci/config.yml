@@ -99,10 +99,6 @@ jobs:
             - examples/<< parameters.example_name >>
 
   publish_package:
-    parameters:
-      package_name:
-        type: string
-
     executor: node
 
     steps:
@@ -159,14 +155,13 @@ workflows:
     jobs:
       - build_test_package:
           package_name: ef-runtime-client
+
+  publish:
+    jobs:
       - publish_package:
           <<: *publish_with_tags_filter
-          package_name: ef-runtime-client
           context:
             - npm-publish-token
-          requires:
-            - build_test_package
-
 
   ef-demo-component:
     when: << pipeline.parameters.ef-demo-component >>
