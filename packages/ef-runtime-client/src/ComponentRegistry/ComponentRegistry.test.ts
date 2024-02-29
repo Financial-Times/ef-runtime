@@ -20,7 +20,8 @@ describe("ComponentRegistry", () => {
       Promise.resolve({
         json: () =>
           Promise.resolve({
-            imports: {
+            dependencies: {},
+            components: {
               "ef-demo-component": { js: "js-url", css: "css-url" },
             },
           }),
