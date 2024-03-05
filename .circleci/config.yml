@@ -27,6 +27,10 @@ parameters:
   ef-demo-component:
     type: boolean
     default: false
+    
+  ef-demo-component-ext:
+    type: boolean
+    default: false
 
 executors:
   node:
@@ -171,6 +175,19 @@ workflows:
       - deploy_example:
           <<: *main_branch_filter
           example_name: ef-demo-component
+          context:
+            - rel-eng-basic-creds
+          requires:
+            - build_test_example
+
+  ef-demo-component-ext:
+    when: << pipeline.parameters.ef-demo-component-ext >>
+    jobs:
+      - build_test_example:
+          example_name: ef-demo-component-ext
+      - deploy_example:
+          <<: *main_branch_filter
+          example_name: ef-demo-component-ext
           context:
             - rel-eng-basic-creds
           requires:
