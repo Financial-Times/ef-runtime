@@ -146,7 +146,7 @@ jobs:
           name: Git push to a heroku app
           command: |
             REMOTE=git.heroku.com/<< parameters.example_name >>.git
-            git push https://heroku:$HEROKU_API_KEY@$REMOTE `git subtree split --prefix examples/<< parameters.example_name >> main`:main --force
+            git push https://heroku:$HEROKU_API_KEY@$REMOTE `git subtree split --prefix examples/<< parameters.example_name >> main`:refs/heads/main --force
 
 workflows:
   # The main workflow responsible for triggering all other workflows
