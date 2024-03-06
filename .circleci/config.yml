@@ -32,6 +32,10 @@ parameters:
     type: boolean
     default: false
 
+  ef-demo-component-vite:
+    type: boolean
+    default: false
+
 executors:
   node:
     docker:
@@ -188,6 +192,19 @@ workflows:
       - deploy_example:
           <<: *main_branch_filter
           example_name: ef-demo-component-ext
+          context:
+            - rel-eng-basic-creds
+          requires:
+            - build_test_example
+
+  ef-demo-component-vite:
+    when: << pipeline.parameters.ef-demo-component-vite >>
+    jobs:
+      - build_test_example:
+          example_name: ef-demo-component-vite
+      - deploy_example:
+          <<: *main_branch_filter
+          example_name: ef-demo-component-vite
           context:
             - rel-eng-basic-creds
           requires:
