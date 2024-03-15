@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "build": "webpack --color --mode=development --config=webpack.config.js",
-    "test": "dotcom-tool-kit test:local",
+    "test": "jest",
     "start": "node server/app.js"
   },
   "dependencies": {
