@@ -1,0 +1,55 @@
+{
+  "entrypoints": {
+    "scripts": {
+      "js": [
+        "webpack-runtime.bundle.js",
+        "page-kit-components.bundle.js",
+        "shared.stable.bundle.js",
+        "financial-times-o-header.bundle.js",
+        "preact.bundle.js",
+        "financial-times-o-footer.bundle.js",
+        "financial-times-o-toggle.bundle.js",
+        "financial-times-o-typography.bundle.js",
+        "financial-times-o-viewport.bundle.js",
+        "financial-times-o-grid.bundle.js",
+        "financial-times-o-utils.bundle.js",
+        "vendors~scripts.bundle.js",
+        "scripts.bundle.js"
+      ]
+    },
+    "styles": {
+      "js": [
+        "webpack-runtime.bundle.js"
+      ],
+      "css": [
+        "styles.css"
+      ]
+    },
+    "page-kit-layout-styles": {
+      "js": [
+        "webpack-runtime.bundle.js",
+        "page-kit-components.bundle.js",
+        "vendors~page-kit-layout-styles.bundle.js"
+      ],
+      "css": [
+        "vendors~page-kit-layout-styles.css"
+      ]
+    }
+  },
+  "financial-times-o-footer.js": "financial-times-o-footer.bundle.js",
+  "financial-times-o-grid.js": "financial-times-o-grid.bundle.js",
+  "financial-times-o-header.js": "financial-times-o-header.bundle.js",
+  "financial-times-o-toggle.js": "financial-times-o-toggle.bundle.js",
+  "financial-times-o-typography.js": "financial-times-o-typography.bundle.js",
+  "financial-times-o-utils.js": "financial-times-o-utils.bundle.js",
+  "financial-times-o-viewport.js": "financial-times-o-viewport.bundle.js",
+  "page-kit-components.js": "page-kit-components.bundle.js",
+  "preact.js": "preact.bundle.js",
+  "scripts.js": "scripts.bundle.js",
+  "shared.stable.js": "shared.stable.bundle.js",
+  "styles.css": "styles.css",
+  "vendors~page-kit-layout-styles.css": "vendors~page-kit-layout-styles.css",
+  "vendors~page-kit-layout-styles.js": "vendors~page-kit-layout-styles.bundle.js",
+  "vendors~scripts.js": "vendors~scripts.bundle.js",
+  "webpack-runtime.js": "webpack-runtime.bundle.js"
+}

@@ -36,6 +36,10 @@ parameters:
     type: boolean
     default: false
 
+  ef-host:
+    type: boolean
+    default: false
+
 executors:
   node:
     docker:
@@ -205,6 +209,19 @@ workflows:
       - deploy_example:
           <<: *main_branch_filter
           example_name: ef-demo-component-vite
+          context:
+            - rel-eng-basic-creds
+          requires:
+            - build_test_example
+
+  ef-host:
+    when: << pipeline.parameters.ef-host >>
+    jobs:
+      - build_test_example:
+          example_name: ef-host
+      - deploy_example:
+          <<: *main_branch_filter
+          example_name: ef-host
           context:
             - rel-eng-basic-creds
           requires:
