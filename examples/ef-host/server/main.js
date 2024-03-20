@@ -18,11 +18,8 @@ import MainPage from '../views/main';
  */
 const app = express({
 	systemCode,
-  demo: true,
 	withBackendAuthentication: false
 });
-
-const isProduction = environment === 'production';
 
 /**
  * Page Kit middleware for the UI components
@@ -34,10 +31,8 @@ app.use(
 	navigationMiddleware(),
 	assetLoaderMiddleware({
 		// in production, assets are hosted on S3. in development, this app will need to serve them.
-		hostStaticAssets: !isProduction,
-		publicPath: isProduction
-			? 'https://www.ft.com/__assets/hashed/page-kit'
-			: '/__dev/assets/__app__',
+		hostStaticAssets: true,
+		publicPath:'/__dev/assets/__app__',
 	})
 );
 
