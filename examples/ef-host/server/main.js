@@ -18,6 +18,7 @@ import MainPage from '../views/main';
  */
 const app = express({
 	systemCode,
+	demo: true,
 	withBackendAuthentication: false
 });
 
