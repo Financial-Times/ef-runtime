@@ -23,7 +23,7 @@
     "packages/ef-runtime-library"
   ],
   "volta": {
-    "node": "18.16.0"
+    "node": "v22.15.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.5",
