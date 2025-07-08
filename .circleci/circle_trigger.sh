@@ -17,7 +17,7 @@ fi
 ## 1. Commit SHA of last CI build
 ############################################
 LAST_COMPLETED_BUILD_URL="${CIRCLE_API}/v1.1/project/${REPOSITORY_TYPE}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/tree/${CIRCLE_BRANCH}?filter=completed&limit=100&shallow=true"
-curl -Ss --header "authorization: Circle-Token ${CIRCLE_TOKEN}" ${LAST_COMPLETED_BUILD_URL} > circle.json
+curl -Ss --header "Circle-Token: ${CIRCLE_TOKEN}" ${LAST_COMPLETED_BUILD_URL} > circle.json
 LAST_COMPLETED_BUILD_SHA=`cat circle.json | jq -r 'map(select(.status == "success") | select(.workflows.workflow_name != "ci")) | .[0]["vcs_revision"]'`
 
 if  [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]] || [[ $(git cat-file -t $LAST_COMPLETED_BUILD_SHA) != "commit" ]]; then
@@ -32,7 +32,7 @@ if  [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]] || [[ $(git cat-file -t $LAST_CO
     | uniq)
 
   REMOTE_BRANCHES=$(git branch -r | sed 's/\s*origin\///' | tr '\n' ' ')
-  PARENT_BRANCH=master
+  PARENT_BRANCH=main
   for BRANCH in ${TREE[@]}
   do
     BRANCH=${BRANCH#"origin/"}
@@ -46,15 +46,15 @@ if  [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]] || [[ $(git cat-file -t $LAST_CO
   echo "Searching for CI builds in branch '${PARENT_BRANCH}' ..."
 
   LAST_COMPLETED_BUILD_URL="${CIRCLE_API}/v1.1/project/${REPOSITORY_TYPE}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/tree/${PARENT_BRANCH}?filter=completed&limit=100&shallow=true"
-  LAST_COMPLETED_BUILD_SHA=`curl -Ss --header "authorization: Circle-Token ${CIRCLE_TOKEN}" "${LAST_COMPLETED_BUILD_URL}" \
+  LAST_COMPLETED_BUILD_SHA=`curl -Ss --header "Circle-Token: ${CIRCLE_TOKEN}" "${LAST_COMPLETED_BUILD_URL}" \
     | jq -r "map(\
       select(.status == \"success\") | select(.workflows.workflow_name != \"ci\") | select(.build_num < ${CIRCLE_BUILD_NUM})) \
     | .[0][\"vcs_revision\"]"`
 fi
 
 if [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]] || [[ $(git cat-file -t $LAST_COMPLETED_BUILD_SHA) != "commit" ]]; then
-  echo -e "\e[93mNo CI builds for branch ${PARENT_BRANCH}. Using master.\e[0m"
-  LAST_COMPLETED_BUILD_SHA=$(git rev-parse origin/master)
+  echo -e "\e[93mNo CI builds for branch ${PARENT_BRANCH}. Using main.\e[0m"
+  LAST_COMPLETED_BUILD_SHA=$(git rev-parse origin/main)
 fi
 
 ############################################

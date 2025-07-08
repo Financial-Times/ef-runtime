@@ -43,7 +43,7 @@ parameters:
 executors:
   node:
     docker:
-      - image: cimg/node:18.16
+      - image: cimg/node:22.15
 
 jobs:
   trigger-workflows:
