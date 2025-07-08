@@ -184,7 +184,7 @@ workflows:
           <<: *main_branch_filter
           example_name: ef-demo-component
           context:
-            - rel-eng-basic-creds
+            - professional
           requires:
             - build_test_example
 
@@ -197,7 +197,7 @@ workflows:
           <<: *main_branch_filter
           example_name: ef-demo-component-ext
           context:
-            - rel-eng-basic-creds
+            - professional
           requires:
             - build_test_example
 
@@ -210,7 +210,7 @@ workflows:
           <<: *main_branch_filter
           example_name: ef-demo-component-vite
           context:
-            - rel-eng-basic-creds
+            - professional
           requires:
             - build_test_example
 
@@ -223,6 +223,6 @@ workflows:
           <<: *main_branch_filter
           example_name: ef-host
           context:
-            - rel-eng-basic-creds
+            - professional
           requires:
             - build_test_example
