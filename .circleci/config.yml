@@ -1,228 +1,127 @@
-# CircleCI configuration file
 version: 2.1
 
-main_branch_filter: &main_branch_filter
+orbs:
+  cloudsmith-npm: ft-circleci-orbs/cloudsmith-npm@1.0
+  coveralls: coveralls/coveralls@1.0.6
+
+defaults: &defaults
+  working_directory: ~/repo
+  docker:
+    - image: cimg/node:22.15
+
+all_branches_filter: &all_branches_filter
   filters:
+    tags:
+      only:
+        - /^v[0-9]+\.[0-9]+\.[0-9]+/
+        - /staging-.*/
     branches:
-      only: main
+      only: /.*/
 
 publish_with_tags_filter: &publish_with_tags_filter
   filters:
     branches:
       ignore: /.*/
     tags:
-      only: /^v[0-9]+\.[0-9]+\.[0-9]+/
-
-parameters:
-  # used to trigger the workflow
-  trigger:
-    type: boolean
-    default: true
-
-  # parameter per package
-  ef-runtime-client:
-    type: boolean
-    default: false
-
-  ef-demo-component:
-    type: boolean
-    default: false
-    
-  ef-demo-component-ext:
-    type: boolean
-    default: false
-
-  ef-demo-component-vite:
-    type: boolean
-    default: false
-
-  ef-host:
-    type: boolean
-    default: false
-
-executors:
-  node:
-    docker:
-      - image: cimg/node:22.15
-
+      only:
+        - /^v[0-9]+\.[0-9]+\.[0-9]+$/
+        - /^v[0-9]+\.[0-9]+\.[0-9]+\-rc[0-9]+$/
+commands:
+  install-dependencies:
+    steps:
+      - cloudsmith-npm/configure_npm:
+          repository: financial-times-internal-releases
+      - run:
+          name: Install dependencies
+          command: |
+            if [ ! -d node_modules ]; then
+              npm ci --ignore-scripts
+            else
+              echo "package.json and package-lock.json unchanged, using cached node_modules"
+            fi
 jobs:
-  trigger-workflows:
-    executor: node
+  coveralls_report:
+    <<: *defaults
     steps:
       - checkout
-      - run:
-          name: Trigger workflows
-          command: chmod +x .circleci/circle_trigger.sh && .circleci/circle_trigger.sh
+      - install-dependencies
 
-  build_test_package:
-    parameters:
-      package_name:
-        type: string
-
-    executor: node
-    working_directory: ~/project/packages/<< parameters.package_name >>
-
-    steps:
-      - checkout:
-          path: ~/project
-      - run:
-          name: Install
-          command: |
-            npm install
-      - run:
-          name: Test
-          command: |
-            npm test
-      - run:
-          name: Build
-          command: |
-            npm run build
-      - persist_to_workspace:
-          root: ~/project
-          paths:
-            - packages/<< parameters.package_name >>
-
-  build_test_example:
-    parameters:
-      example_name:
-        type: string
-
-    executor: node
-    working_directory: ~/project/examples/<< parameters.example_name >>
-
-    steps:
-      - checkout:
-          path: ~/project
-      - run:
-          name: Install
-          command: |
-            npm install
-      - run:
-          name: Test
-          command: |
-            npm test
-      - run:
-          name: Build
-          command: |
-            npm run build
-      - persist_to_workspace:
-          root: ~/project
-          paths:
-            - examples/<< parameters.example_name >>
-
-  publish_package:
-    executor: node
-
+  get_dependencies:
+    <<: *defaults
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - v1-npm-{{ checksum "package.json" }}-{{ checksum "package-lock.json" }}
+      - install-dependencies
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-npm-{{ checksum "package.json" }}-{{ checksum "package-lock.json" }}
+      - persist_to_workspace:
+          root: ~/repo
+          paths:
+            - .
+
+  build:
+    <<: *defaults
+    steps:
       - attach_workspace:
-          at: ~/project
-      - run:
-          name: Install
-          command: |
-            npm install
-      - run:
-          name: Set version
-          command: |
-            npm version --workspaces ${CIRCLE_TAG}
+          at: ~/repo
       - run:
           name: Build
-          command: |
-            npm run build --workspaces --if-present
+          command: npm run build
+      - persist_to_workspace:
+          root: ~/repo
+          paths:
+            - .
+
+  lint:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - run: npm run lint
+
+  publish:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/repo
       - run:
           name: Publish to NPM
           command: |
             npm set //registry.npmjs.org/:_authToken=$NPM_TOKEN
-            npm publish --workspaces --access=public --allow-same-version
-
-  deploy_example:
-    parameters:
-      example_name:
-        type: string
-
-    executor: node
-
-    steps:
-      - checkout
-      - attach_workspace:
-          at: ~/project
-      - run:
-          name: Git push to a heroku app
-          command: |
-            REMOTE=git.heroku.com/<< parameters.example_name >>.git
-            git push https://heroku:$HEROKU_API_KEY@$REMOTE `git subtree split --prefix examples/<< parameters.example_name >> main`:refs/heads/main --force
+            npm publish --access=public
 
 workflows:
-  # The main workflow responsible for triggering all other workflows
-  # in which changes are detected.
-  ci:
-    when: << pipeline.parameters.trigger >>
+  build_and_publish:
     jobs:
-      - trigger-workflows:
-          context:
-            - extensible-frontends
+      - get_dependencies:
+          <<: *all_branches_filter
+          context: professional
 
-  ef-runtime-client:
-    when: << pipeline.parameters.ef-runtime-client >>
-    jobs:
-      - build_test_package:
-          package_name: ef-runtime-client
+      - build:
+          <<: *all_branches_filter
+          requires:
+            - get_dependencies
 
-  publish:
-    jobs:
-      - publish_package:
+      - lint:
+          <<: *all_branches_filter
+          requires:
+            - build
+
+      - coveralls_report:
+          <<: *all_branches_filter
+          context: professional
+          requires:
+            - build
+
+      - publish:
           <<: *publish_with_tags_filter
           context:
             - npm-publish-token
-
-  ef-demo-component:
-    when: << pipeline.parameters.ef-demo-component >>
-    jobs:
-      - build_test_example:
-          example_name: ef-demo-component
-      - deploy_example:
-          <<: *main_branch_filter
-          example_name: ef-demo-component
-          context:
-            - professional
           requires:
-            - build_test_example
-
-  ef-demo-component-ext:
-    when: << pipeline.parameters.ef-demo-component-ext >>
-    jobs:
-      - build_test_example:
-          example_name: ef-demo-component-ext
-      - deploy_example:
-          <<: *main_branch_filter
-          example_name: ef-demo-component-ext
-          context:
-            - professional
-          requires:
-            - build_test_example
-
-  ef-demo-component-vite:
-    when: << pipeline.parameters.ef-demo-component-vite >>
-    jobs:
-      - build_test_example:
-          example_name: ef-demo-component-vite
-      - deploy_example:
-          <<: *main_branch_filter
-          example_name: ef-demo-component-vite
-          context:
-            - professional
-          requires:
-            - build_test_example
-
-  ef-host:
-    when: << pipeline.parameters.ef-host >>
-    jobs:
-      - build_test_example:
-          example_name: ef-host
-      - deploy_example:
-          <<: *main_branch_filter
-          example_name: ef-host
-          context:
-            - professional
-          requires:
-            - build_test_example
+            - build
+            - lint
+            - coveralls_report
