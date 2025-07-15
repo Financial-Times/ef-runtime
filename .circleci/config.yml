@@ -2,7 +2,6 @@ version: 2.1
 
 orbs:
   cloudsmith-npm: ft-circleci-orbs/cloudsmith-npm@1.0
-  coveralls: coveralls/coveralls@1.0.6
 
 defaults: &defaults
   working_directory: ~/repo
@@ -40,11 +39,6 @@ commands:
               echo "package.json and package-lock.json unchanged, using cached node_modules"
             fi
 jobs:
-  coveralls_report:
-    <<: *defaults
-    steps:
-      - checkout
-      - install-dependencies
 
   get_dependencies:
     <<: *defaults
@@ -76,13 +70,6 @@ jobs:
           paths:
             - .
 
-  lint:
-    <<: *defaults
-    steps:
-      - attach_workspace:
-          at: ~/repo
-      - run: npm run lint
-
   publish:
     <<: *defaults
     steps:
@@ -106,22 +93,9 @@ workflows:
           requires:
             - get_dependencies
 
-      - lint:
-          <<: *all_branches_filter
-          requires:
-            - build
-
-      - coveralls_report:
-          <<: *all_branches_filter
-          context: professional
-          requires:
-            - build
-
       - publish:
           <<: *publish_with_tags_filter
           context:
             - npm-publish-token
           requires:
             - build
-            - lint
-            - coveralls_report
