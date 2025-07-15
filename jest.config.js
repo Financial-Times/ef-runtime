@@ -1,5 +1,5 @@
 module.exports = {
-    projects: [
-      '<rootDir>/packages/*/jest.config.js',
-    ],
-  };
+  roots: ['<rootDir>/src/'],
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+};

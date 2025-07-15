@@ -1,14 +1,16 @@
 {
   "compilerOptions": {
-    "declaration": true,
-    "sourceMap": true,
-    "noImplicitAny": true,
-    "module": "CommonJS",
-    "target": "es6",
-    "allowJs": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "allowSyntheticDefaultImports": true,
-    "typeRoots": ["./types", "./node_modules/@types"]
-  }
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+    "outDir": "./dist/",
+    "baseUrl": "./",
+    "paths": {
+      "~/src/*": ["src/*"],
+      "~/test/*": ["test/*"],
+      "~/types/*": ["types/*"]
+    }
+  },
+  "types": ["systemjs", "jest", "node"],
+  "include": ["./src/**/*"],
+  "exclude": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx", "node_modules"]
 }
