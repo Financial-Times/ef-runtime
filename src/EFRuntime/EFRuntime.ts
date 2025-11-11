@@ -134,7 +134,16 @@ export class EFRuntime {
   }
 
   private async loadComponent(js: string, css: string, component: string) {
-    this.stylingHandler.addStyling(css);
+
+    if (component === "pro-article-context") {
+      await this.stylingHandler.addStyling(css, {
+        containerSelector: `#${component}-container`,
+        strategy: "shadow",
+      });
+    } else {
+      await this.stylingHandler.addStyling(css);
+    }
+
     try {
       const componentScript = this.moduleLoader.createModuleScript(js);
       document.body.append(componentScript);
