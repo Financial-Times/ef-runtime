@@ -35,7 +35,7 @@ export class StylingHandler implements IStylingHandler {
         if (!target) {
           throw new Error(`Container not found for selector: ${opts?.containerSelector}`);
         }
-        const shadow = await this.wrapWithEfScope(target, url);
+        const shadow = await this.attachShadow(target, url);
         this.logger.info?.(`Scoped style added (shadow): ${url}`, shadow);
         return;
       }
@@ -62,25 +62,19 @@ export class StylingHandler implements IStylingHandler {
   /* -------------------- helpers -------------------- */
 
   /**
-   * Replaces the container with <ef-scope>, attaches a shadow root,
-   * injects the CSS, and moves the container INSIDE the shadow tree.
-   * The host (<ef-scope>) takes the original container's place in the DOM.
+   * Attaches a shadow DOM tree to the specified container and returns a reference to its ShadowRoot.
+   * injects the CSS, and returns a reference to its ShadowRoot.
    */
-  private async wrapWithEfScope(container: HTMLElement, cssHref: string) {
+  private async attachShadow(container: HTMLElement, cssHref: string) {
     // Bail if already wrapped
     if ((container as any).__efScoped) return;
     (container as any).__efScoped = true;
 
-    // 1) Create host and replace container in-place
-    const host = document.createElement("ef-scope");
+    // 1) Attach/open shadow
+    const shadow = container.attachShadow({ mode: "open" });
+    console.log("Shadow DOM attached to container", container, shadow);
 
-    const containerChild = container.childNodes;
-    container.replaceWith(host); // host is now at the same DOM position
-
-    // 2) Attach/open shadow
-    const shadow = host.attachShadow({ mode: "open" });
-
-    // 3) Load stylesheet (constructable sheet first, fallback to <style>)
+    // 2) Load stylesheet (constructable sheet first, fallback to <style>)
     const supportsSheets =
       "adoptedStyleSheets" in (Document.prototype as any) &&
       "replaceSync" in (CSSStyleSheet.prototype as any);
@@ -106,7 +100,6 @@ export class StylingHandler implements IStylingHandler {
       shadow.appendChild(styleEl);
     }
 
-    shadow.appendChild(container);
     return shadow;
   }
 
