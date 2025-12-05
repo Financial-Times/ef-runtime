@@ -18,7 +18,7 @@ export class StylingHandler implements IStylingHandler {
       const componentCSS = this.document.createElement("link");
       componentCSS.rel = "stylesheet";
       componentCSS.href = url;
-      this.document.head.append(componentCSS);
+      this.document.head.prepend(componentCSS);
       this.logger.info(`Styling added: ${url}`);
     } catch (error) {
       this.logger.error(`Failed to add styling: ${url}`, error);
