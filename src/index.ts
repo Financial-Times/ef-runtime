@@ -31,7 +31,7 @@ function validateLoggingOptions(logging?: ILoggingOptions): void {
 
 export async function init(options: {
   systemCode: string;
-  efFlag?: "on" | "prod" | "staging";
+  efFlag?: "on" | "production" | "staging";
   overrides?: { [propName: string]: { js: string; css: string } };
   logging?: ILoggingOptions;
 }) {
