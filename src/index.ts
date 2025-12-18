@@ -31,6 +31,7 @@ function validateLoggingOptions(logging?: ILoggingOptions): void {
 
 export async function init(options: {
   systemCode: string;
+  efFlag?: "on" | "prod" | "staging";
   overrides?: { [propName: string]: { js: string; css: string } };
   logging?: ILoggingOptions;
 }) {
@@ -39,7 +40,10 @@ export async function init(options: {
   const logger = new Logger(options.logging);
 
   const registry = new ComponentRegistry({
-    registryURL: "https://ef-component-registry.in.ft.com/",
+    registryURL:
+      options.efFlag === "staging"
+        ? "https://ef-component-registry-staging.in.ft.com/"
+        : "https://ef-component-registry.in.ft.com/",
     logger: logger,
   });
 
@@ -65,6 +69,9 @@ export async function init(options: {
   }
 
   // Initialize UI only if on localhost and when efui localStorage key is set to true
-  if (location.hostname.match("local") && localStorage.getItem("efui") === "true")
+  if (
+    location.hostname.match("local") &&
+    localStorage.getItem("efui") === "true"
+  )
     UI.init(registry);
 }

@@ -5,6 +5,7 @@
     "outDir": "./dist/",
     "allowJs": true,
     "baseUrl": "./",
+    "lib": ["ES2015", "DOM"],
     "paths": {
       "~/src/*": ["src/*"],
       "~/test/*": ["test/*"],
