@@ -1,7 +1,7 @@
 import { IComponentRegistry } from "../ComponentRegistry";
 import { ModuleLoader } from "../ModuleLoader";
 import { StylingHandler } from "../StylingHandler";
-import { EFComponentInfo } from "../types";
+import { EFComponentInfo, EFRegistryInfo } from "../types";
 import { Logger } from "../Logger";
 
 export interface IRuntimeDependencies {
@@ -57,8 +57,10 @@ export class EFRuntime {
     await this.registry.fetch(options.systemCode as string);
 
     const dependencies = this.registry.getRegistry().dependencies;
-    if (dependencies && Object.keys(dependencies).length > 0)
+    if (dependencies && Object.keys(dependencies).length > 0) {
       this.addImportMap(dependencies);
+      this.addLinkTags(dependencies);
+    }
 
     if (options.overrides) {
       this.registry.applyOverrides(options.overrides);
@@ -75,26 +77,48 @@ export class EFRuntime {
       this.loadAll(components);
   }
 
-  addImportMap(dependencies: { [key: string]: string }) {
+  addImportMap(dependencies: EFRegistryInfo["dependencies"]) {
     const pageImportMapScript = this.document.querySelector(
       "script[type='importmap']",
     );
 
+    // Create a new import map with only the dependencies from the registry only JS type
+    const dependenciesImportMap = Object.entries(dependencies).reduce(
+      (acc, [key, value]) =>
+        value.type === "js" ? Object.assign(acc, { [key]: value.url }) : acc,
+      {} as Record<string, string>,
+    );
+
     if (pageImportMapScript) {
-      let pageImportMap = JSON.parse(pageImportMapScript.innerHTML);
+      let pageImportMap = JSON.parse(
+        pageImportMapScript.innerHTML.length
+          ? pageImportMapScript.innerHTML
+          : "{}",
+      );
       if (pageImportMap.hasOwnProperty("imports")) {
-        Object.assign(pageImportMap.imports, dependencies);
+        Object.assign(pageImportMap.imports, dependenciesImportMap);
       } else {
-        Object.assign(pageImportMap, { imports: dependencies });
+        Object.assign(pageImportMap, { imports: dependenciesImportMap });
       }
       pageImportMapScript.innerHTML = JSON.stringify(pageImportMap);
     } else {
       let importmapScript: HTMLScriptElement =
         this.document.createElement("script");
       importmapScript.type = "importmap";
-      importmapScript.innerHTML = JSON.stringify({ imports: dependencies });
+      importmapScript.innerHTML = JSON.stringify({
+        imports: dependenciesImportMap,
+      });
       this.document.head.appendChild(importmapScript);
     }
+  }
+
+  addLinkTags(dependencies: EFRegistryInfo["dependencies"]) {
+    Object.values(dependencies).forEach(({ type, url }) => {
+      const linkElement = this.document.createElement("link");
+      linkElement.rel = type === "js" ? "modulepreload" : "stylesheet";
+      linkElement.href = url;
+      this.document.head.appendChild(linkElement);
+    });
   }
 
   async loadAll(components: { [key: string]: EFComponentInfo }): Promise<void> {
