@@ -51,13 +51,14 @@ export class EFRuntime {
     options: {
       systemCode?: string;
       overrides?: { [propName: string]: EFComponentInfo };
-    } = {}
+    } = {},
   ): Promise<void> {
     this.validateOptions(options);
     await this.registry.fetch(options.systemCode as string);
 
     const dependencies = this.registry.getRegistry().dependencies;
-    if (dependencies && Object.keys(dependencies).length > 0) this.addImportMap(dependencies);
+    if (dependencies && Object.keys(dependencies).length > 0)
+      this.addImportMap(dependencies);
 
     if (options.overrides) {
       this.registry.applyOverrides(options.overrides);
@@ -68,13 +69,16 @@ export class EFRuntime {
       this.registry.applyOverrides(JSON.parse(localOverrides));
     }
 
-    const components: { [key: string]: EFComponentInfo } = this.registry.getRegistry().components;
-    if (components && Object.keys(components).length > 0) this.loadAll(components);
+    const components: { [key: string]: EFComponentInfo } =
+      this.registry.getRegistry().components;
+    if (components && Object.keys(components).length > 0)
+      this.loadAll(components);
   }
 
   addImportMap(dependencies: { [key: string]: string }) {
-
-    const pageImportMapScript = this.document.querySelector("script[type='importmap']");
+    const pageImportMapScript = this.document.querySelector(
+      "script[type='importmap']",
+    );
 
     if (pageImportMapScript) {
       let pageImportMap = JSON.parse(pageImportMapScript.innerHTML);
@@ -85,7 +89,8 @@ export class EFRuntime {
       }
       pageImportMapScript.innerHTML = JSON.stringify(pageImportMap);
     } else {
-      let importmapScript: HTMLScriptElement = this.document.createElement('script');
+      let importmapScript: HTMLScriptElement =
+        this.document.createElement("script");
       importmapScript.type = "importmap";
       importmapScript.innerHTML = JSON.stringify({ imports: dependencies });
       this.document.head.appendChild(importmapScript);
@@ -93,23 +98,21 @@ export class EFRuntime {
   }
 
   async loadAll(components: { [key: string]: EFComponentInfo }): Promise<void> {
-    const loadPromises = Object.entries(components)
-      .map(([component, info]) => {
-        const { js, css } = info;
-        if (!this.isValidURL(js, css, component)) return;
+    const loadPromises = Object.entries(components).map(([component, info]) => {
+      const { js, css } = info;
+      if (!this.isValidURL(js, css, component)) return;
 
-        this.loadComponent(js, css, component).catch((error) =>
-          this.logger.error(`Error loading ${component}`, error)
-        )
-      }
+      this.loadComponent(js, css, component).catch((error) =>
+        this.logger.error(`Error loading ${component}`, error),
       );
+    });
     await Promise.all(loadPromises);
   }
 
   private isValidURL(
     js: string | null,
     css: string | null,
-    component: string
+    component: string,
   ): boolean {
     let isValid = true;
     let missingParts: string[] = [];
@@ -126,7 +129,7 @@ export class EFRuntime {
 
     if (!isValid) {
       this.logger.error(
-        `Missing ${missingParts.join(" and ")} URL for component ${component}`
+        `Missing ${missingParts.join(" and ")} URL for component ${component}`,
       );
     }
 
