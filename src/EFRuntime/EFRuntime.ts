@@ -82,7 +82,7 @@ export class EFRuntime {
       "script[type='importmap']",
     );
 
-    // Create a new import map with only the dependencies from the registry only JS type
+    // Create a new JS only import map with dependencies from the registry
     const dependenciesImportMap = Object.entries(dependencies).reduce(
       (acc, [key, value]) =>
         value.type === "js" ? Object.assign(acc, { [key]: value.url }) : acc,
