@@ -117,7 +117,7 @@ export class EFRuntime {
       const linkElement = this.document.createElement("link");
       linkElement.rel = type === "js" ? "modulepreload" : "stylesheet";
       linkElement.href = url;
-      this.document.head.appendChild(linkElement);
+      this.document.head.prepend(linkElement);
     });
   }
 
